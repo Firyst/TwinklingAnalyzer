@@ -1,0 +1,5 @@
+test_func = LogicFunction( "(!x1*!x2*!x3*!x4)+(!x1 * !x2 * !x3 * x4)+(!x1*!x2*x3*!x4)+(!x1 * x2 * !x3 * x4)+(!x1*x2*x3*x4)+(x1*!x2*!x3*!x4)+(x1*!x2*x3*!x4)+(x1*x2*!x3*!x4)+(x1*x2*x3*x4)" )
+print(test_func.generate_boolean_table())
+f2 = LogicFunction('a + b + c')
+print(f2.get_variables())
+print(f2.generate_boolean_table())
