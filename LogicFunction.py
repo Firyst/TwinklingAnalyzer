@@ -1,20 +1,56 @@
 from itertools import product
-from string import punctuation
+from string import punctuation, ascii_letters, digits
 
 
 # словарь замен для представления функции в стандартном python виде
-REPLACES = {' and ': ['&&', '*', ' и ', ' AND ', ' И ', '&'],
-            ' or ': ['||', '+', ' или ', ' OR ', ' ИЛИ ', '|'],
+REPLACES = {' and ': ['&&', '*', ' и ', ' AND ', ' И ', '&', '⋀'],
+            ' or ': ['||', '+', ' или ', ' OR ', ' ИЛИ ', '|', '⋁'],
             ' not ': ['!', ' NOT ', ' не ', ' НЕ '],
             ' ^ ': [' xor ', ' XOR ', '==']}
+# строка с корректными символами
+VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" + "()^ " + digits
+# print(VALID_SYMBOLS)
+
+
+class InputException(Exception):
+    pass
 
 
 class LogicFunction:
+    """
+    Класс, описывающий логическое выражение.
+    """
     def __init__(self, expression: str):
         self.exp = expression
+
+        # замена возможных записей функции на python-интерпретируемые
         for repl_symbol in REPLACES:
             for possible_entry in REPLACES[repl_symbol]:
                 self.exp = self.exp.replace(possible_entry, repl_symbol)
+
+        # чистим лишние пробелы
+        while '  ' in self.exp:
+            self.exp = self.exp.replace('  ', ' ')
+
+        # проверяем на корректность символов
+        for symb in self.exp:
+            if symb not in VALID_SYMBOLS:
+                raise InputException(f"Неизвестный символ: '{symb}'")
+
+        # проверяем количество переменных
+        variables = self.get_variables()
+
+        if not len(variables):
+            raise InputException("В функции нету ни одной переменной.")
+
+        for variable in self.get_variables():
+            if variable in digits:
+                raise InputException("Переменные нельзя называть цифрами")
+
+        # проверяем корректность скобочек
+        # ошибка вызовется внутри функции
+        test_value = self.get_result((0, ) * len(variables))
+
 
     def get_current_expression(self) -> str:
         """
@@ -41,7 +77,7 @@ class LogicFunction:
 
         return sorted(list(set(variables_left.split())))
 
-    def get_function_result(self, values) -> int:
+    def get_result(self, values) -> int:
         """
         Выполнить функцию с определенными значениями переменных.
         Args:
@@ -56,6 +92,7 @@ class LogicFunction:
             # eval_string.replace(var, str(values[i]))  # has a bad case that should be fixed
         eval_string += 'res = ' + self.exp
         res = {}
+        print(eval_string)
         exec(eval_string, globals(), res)
         return int(res["res"])
 
@@ -67,7 +104,7 @@ class LogicFunction:
         func_vars = self.get_variables()  # get all variables
         result = []
         for func_case in product((0, 1), repeat=len(func_vars)):
-            case_result = self.get_function_result(func_case)
+            case_result = self.get_result(func_case)
             result.append((func_case, case_result))
         return result
 
@@ -109,3 +146,21 @@ class LogicFunction:
 
         """
         pass
+
+
+def generate_function_from_table(table: list, method=0) -> LogicFunction:
+    """
+    Генерирует и возвращает объект LogicFunction по таблице истинности формата:
+    list: [((tuple: input_values), result)]
+    Используемые названия переменных: a, b, c, d...
+    Args:
+        table: list: [((tuple: input_values), result)]
+        method: 0 - СДНФ, 1 - СКНФ
+
+    Returns: объект LogicFunction с совершенной формой
+
+    """
+
+
+#tf = LogicFunction(" 1")
+# print(tf.get_variables())

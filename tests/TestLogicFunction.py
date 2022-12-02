@@ -10,12 +10,13 @@ class TestLogicFunction(unittest.TestCase):
         self.assertEqual(self.func.get_variables(), ['a', 'b', 'c'])
 
     def test_result(self):
-        self.assertEqual(self.func.get_function_result((0, 1, 0)), 1)
+        self.assertEqual(self.func.get_result((0, 1, 0)), 1)
 
     def test_table(self):
         self.assertEqual(self.func.generate_boolean_table(),
                          [((0, 0, 0), 0), ((0, 0, 1), 1), ((0, 1, 0), 1), ((0, 1, 1), 1), ((1, 0, 0), 1),
                           ((1, 0, 1), 1), ((1, 1, 0), 1), ((1, 1, 1), 1)])
+
 
 
 # Executing the tests in the above test case class
