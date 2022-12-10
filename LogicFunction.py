@@ -21,6 +21,10 @@ class LogicFunction:
     Класс, описывающий логическое выражение.
     """
     def __init__(self, expression: str):
+        """! Инициализация выражения
+        @param expression  выражения в указанном формате
+        """
+
         self.exp = expression
 
         # замена возможных записей функции на python-интерпретируемые
@@ -53,17 +57,14 @@ class LogicFunction:
 
 
     def get_current_expression(self) -> str:
-        """
-        Получить текущую запись логической функции.
-        Returns: строка, отображающая логическую функцию с python-совместимыми операторами
-
+        """! Получить текущую запись логической функции.
+        @return строка, отображающая логическую функцию с python-совместимыми операторами
         """
         return self.exp
 
     def get_variables(self):
-        """
-        Получить названия всех переменных в функции
-        Returns: отсортированный list названий переменных
+        """! Получить названия всех переменных в функции
+        @return отсортированный list названий переменных
 
         """
         variables_left = self.exp
@@ -78,13 +79,10 @@ class LogicFunction:
         return sorted(list(set(variables_left.split())))
 
     def get_result(self, values) -> int:
-        """
-        Выполнить функцию с определенными значениями переменных.
-        Args:
-            values: Итерируемый объект из 1 и 0. Переменные подаются в таком же порядке,
+        """! Выполнить функцию с определенными значениями переменных.
+        @param values  Итерируемый объект из 1 и 0. Переменные подаются в таком же порядке,
             в котором они возвращаются функцией get_variables()
-
-        Returns: result of running function with set values
+        @return результат функции при заданных входных данных
         """
         eval_string = ''
         for i, var in enumerate(self.get_variables()):
@@ -97,9 +95,8 @@ class LogicFunction:
         return int(res["res"])
 
     def generate_boolean_table(self) -> list:
-        """
-        Генерирует таблицу истинности для логической функции
-        Returns: list of tuples ((tuple: input_values), result)
+        """! Генерирует таблицу истинности для логической функции
+        @return  list of tuples ((tuple: input_values), result)
         """
         func_vars = self.get_variables()  # get all variables
         result = []
@@ -109,10 +106,8 @@ class LogicFunction:
         return result
 
     def beautiful_boolean_table(self):
-        """
-        Генерирует визуализацию таблицы истинности для print.
-        Returns: отформатированная строка
-
+        """! Генерирует визуализацию таблицы истинности для print.
+        @return отформатированная строка
         """
         table = self.generate_boolean_table()
         result = '\t'.join(self.get_variables() + ['func'])
@@ -121,24 +116,21 @@ class LogicFunction:
         return result
 
     def generate_pdnfs(self):
-        """
-        PDNF (perfect disjunctive normal form), или СДНФ.
+        """PDNF (perfect disjunctive normal form), или СДНФ.
         Returns: объект LogicFunction в СДНФ
 
         """
         pass
 
     def generate_pcnfs(self):
-        """
-        PCNF (perfect conjunctive normal form), или СКНФ.
+        """PCNF (perfect conjunctive normal form), или СКНФ.
         Returns: объект LogicFunction в СКНФ
 
         """
         pass
 
     def simplify(self, method=0):
-        """
-        Упрощение методом Квайна
+        """Упрощение методом Квайна
         Args:
             method: 0 - упрощение к МДНФ; 1 - урощение к МКНФ
 
@@ -149,8 +141,7 @@ class LogicFunction:
 
 
 def generate_function_from_table(table: list, method=0) -> LogicFunction:
-    """
-    Генерирует и возвращает объект LogicFunction по таблице истинности формата:
+    """Генерирует и возвращает объект LogicFunction по таблице истинности формата:
     list: [((tuple: input_values), result)]
     Используемые названия переменных: a, b, c, d...
     Args:
@@ -161,6 +152,7 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
 
     """
 
-
-#tf = LogicFunction(" 1")
-# print(tf.get_variables())
+'''
+tf = LogicFunction("А ИЛИ Б И НЕ В")
+print(tf.get_current_expression())
+print(tf.generate_boolean_table())'''
