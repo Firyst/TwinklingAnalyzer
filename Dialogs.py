@@ -1,5 +1,6 @@
 from PyQt5 import uic, QtCore, QtGui
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QTableWidgetItem
 from itertools import product
 from LogicFunction import LogicFunction, InputException
@@ -117,6 +118,34 @@ class TableDialog(QDialog):
         self.output = []
         dialog = WarnDialog("Ошибка", error_text)
         dialog.exec_()
+
+    def close_dialog(self):
+        self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
+        self.close()
+
+
+class LogicSelectDialog(QDialog):
+    output = None
+    images = {0: "resources/not.png", 1: "resources/and.png", 2: "resources/or.png", }
+
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('resources/LogicSelectDialog.ui', self)
+        self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
+
+        self.setWindowTitle("Выбор элемента")
+        self.buttonCancel.clicked.connect(self.close_dialog)
+        self.buttonConfirm.clicked.connect(self.confirm_input)
+        self.picture.setPixmap(QPixmap("resources/not.png"))
+
+        self.selector.currentIndexChanged.connect(self.change_image)
+
+    def change_image(self):
+        self.picture.setPixmap(QPixmap(self.images[self.selector.currentIndex()]))
+
+    def confirm_input(self):
+        self.output = self.selector.currentIndex()
+        self.close()
 
     def close_dialog(self):
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
