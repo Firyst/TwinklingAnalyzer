@@ -1,5 +1,6 @@
 from itertools import product
 from string import punctuation, ascii_letters, digits
+from string import ascii_lowercase as var_names
 
 
 # словарь замен для представления функции в стандартном python виде
