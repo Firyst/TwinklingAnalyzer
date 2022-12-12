@@ -1,5 +1,6 @@
 from itertools import product
 from string import punctuation, ascii_letters, digits
+from string import ascii_lowercase as var_names
 
 
 # словарь замен для представления функции в стандартном python виде
@@ -151,6 +152,28 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
     Returns: объект LogicFunction с совершенной формой
 
     """
+    snf = []  # список с логическими выражениями
+    for line in table:
+        term = []  # список одного логического выражения
+        if line[1]==method:
+            for j in range(len(line[0])):
+                if line[0][j] == 1 and method == 1:
+                    term.append(var_names[j])
+                elif line[0][j] == 0 and method == 1:
+                    term.append('!' + var_names[j])
+                elif line[0][j] == 0 and method == 0:
+                    term.append(var_names[j])
+                elif line[0][j] == 1 and method == 0:
+                    term.append('!' + var_names[j])
+        else:
+            continue
+        if method == 1:
+            snf.append('*'.join(term))
+        else:
+            snf.append('(' + '+'.join(term) + ')')
+    if method == 1:
+        return LogicFunction('+'.join(snf))
+    return LogicFunction('*'.join(snf))
 
 '''
 tf = LogicFunction("А ИЛИ Б И НЕ В")
