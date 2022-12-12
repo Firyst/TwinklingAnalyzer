@@ -127,6 +127,7 @@ class TableDialog(QDialog):
 class LogicSelectDialog(QDialog):
     output = None
     images = {0: "resources/not.png", 1: "resources/and.png", 2: "resources/or.png", }
+    output_data = {0: 'not', 1: 'and', 2: 'or'}
 
     def __init__(self):
         super().__init__()
@@ -141,10 +142,11 @@ class LogicSelectDialog(QDialog):
         self.selector.currentIndexChanged.connect(self.change_image)
 
     def change_image(self):
-        self.picture.setPixmap(QPixmap(self.images[self.selector.currentIndex()]))
+        self.picture.setPixmap(QPixmap('resources/' +
+                                       self.output_data[self.selector.currentIndex()] + '.png'))
 
     def confirm_input(self):
-        self.output = self.selector.currentIndex()
+        self.output = self.output_data[self.selector.currentIndex()]
         self.close()
 
     def close_dialog(self):

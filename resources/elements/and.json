@@ -1,0 +1,9 @@
+{
+  "image": "resources/and.png",
+  "connectors": {
+    "input1": [0, 1],
+    "input2": [0, 3],
+    "output": [4, 2]
+  },
+  "operator": "and"
+}
