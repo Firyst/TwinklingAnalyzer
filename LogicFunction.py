@@ -153,17 +153,20 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
 
     """
     snf = []  # список с логическими выражениями
-    for line in mas:
+    for line in table:
         term = []  # список одного логического выражения
-        for j in range(len(line[0])):
-            if line[0][j] == 1 and method == 1:
-                term.append(var_names[j])
-            elif line[0][j] == 0 and method == 1:
-                term.append('!' + var_names[j])
-            elif line[0][j] == 0 and method == 0:
-                term.append(var_names[j])
-            elif line[0][j] == 1 and method == 0:
-                term.append('!' + var_names[j])
+        if line[1]==method:
+            for j in range(len(line[0])):
+                if line[0][j] == 1 and method == 1:
+                    term.append(var_names[j])
+                elif line[0][j] == 0 and method == 1:
+                    term.append('!' + var_names[j])
+                elif line[0][j] == 0 and method == 0:
+                    term.append(var_names[j])
+                elif line[0][j] == 1 and method == 0:
+                    term.append('!' + var_names[j])
+        else:
+            continue
         if method == 1:
             snf.append('*'.join(term))
         else:
