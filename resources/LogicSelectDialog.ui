@@ -48,6 +48,11 @@
        <string>OR (ИЛИ)</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Input (Входная переменная)</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item>

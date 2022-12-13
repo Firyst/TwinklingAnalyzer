@@ -1,0 +1,8 @@
+{
+  "image": "resources/debug.png",
+  "size": [3, 3],
+  "connectors": {
+    "output_end": [0, 1]
+  },
+  "operator": "output"
+}
