@@ -322,9 +322,9 @@ class LogicFunction:
                 for j in range(len(key)):
                     if key[j]!='X':
                         if key[j]=='0':
-                            term.append(var_names[j])
+                            term.append(cur_names[j])
                         else:
-                            term.append('!' + var_names[j])
+                            term.append('!' + cur_names[j])
                 mknf.append('(' + '+'.join(term) + ')')
             for key1 in final_table.keys():
                 if key1!=key:
