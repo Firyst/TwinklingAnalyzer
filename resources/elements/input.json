@@ -1,5 +1,5 @@
 {
-  "image": "resources/debug.png",
+  "image": "resources/input.png",
   "size": [3, 3],
   "connectors": {
     "input1": [2, 1]

@@ -51,7 +51,6 @@ class ProgramWindow(QMainWindow):
         self.canvas.render_widgets()
 
     def canvas_context_menu(self, event):
-        print(event.x(), event.y())
         menu = QMenu(self.schemeTab)
         add_action = menu.addAction("Новый элемент")
         back_action = menu.addAction("Вернуться к началу координат")
@@ -62,11 +61,10 @@ class ProgramWindow(QMainWindow):
             if dialog.output is not None:
                 self.schemeTab.hide()  # для правильной отрисовки нужно отключить события обновления
                 widget = self.canvas.new_widget(DraggableWidget(self.schemeTab, dialog.output, self.canvas))
-                widget.grid_pos = ((self.canvas.pos[0] + event.x()) // self.canvas.step,
-                                   (self.canvas.pos[1] + event.y()) // self.canvas.step)
+                widget.grid_pos = ((event.x()) // self.canvas.step + self.canvas.pos[0] // 20,
+                                   (event.y()) // self.canvas.step + self.canvas.pos[1] // 20)
                 widget.render_object()
                 self.schemeTab.show()
-                print(len(self.canvas.widgets))
                 self.canvas.render_widgets()
         elif action == back_action:
             self.canvas.pos = (0, 0)
@@ -113,16 +111,21 @@ class DraggableWidget(QLabel):
         self.image = object_type
         self.setPixmap(QPixmap(self.properties['image']))
 
+        if object_type == 'input':
+            dialog = TinyInputDialog()
+            dialog.exec_()
+            if dialog.output is None:
+                self.deleteLater()
+                return
+            self.name_widget = QLabel(self)
+            self.name_widget.setText(dialog.output)
+            current_font = self.name_widget.font()
+            current_font.setPointSize(12)
+            self.name_widget.setFont(current_font)
         self.add_connectors()
 
-        if object_type == 'input':
-            self.name_widget = QLineEdit(self)
-            self.name_widget.setFocusPolicy(Qt.StrongFocus)
-            self.name_widget.focus = False
-            self.name_widget.returnPressed.connect(self.defocus)
 
     def defocus(self):
-        print(111)
         self.name_widget.hide()
         self.name_widget.focus = False
         self.name_widget.deselect()
@@ -216,7 +219,6 @@ class Connector(QLabel):
 
     def __init__(self, parent, offset: tuple):
         self.offset = offset
-        print(offset)
         super().__init__(parent)
         self.parent = parent
         self.setScaledContents(True)
@@ -260,16 +262,14 @@ class Connector(QLabel):
         QApplication.restoreOverrideCursor()
 
     def mouseMoveEvent(self, ev: QtGui.QMouseEvent) -> None:
-        if self.underMouse():
-            current_grid_pos = ((self.geometry().x() + self.parent.geometry().x() + self.parent.canvas.pos[0])
-                                // self.parent.canvas.step,
-                                (self.geometry().y() + self.parent.geometry().y() + self.parent.canvas.pos[1])
-                                // self.parent.canvas.step)
+        if 1:
+            current_grid_pos = (self.parent.get_grid_pos()[0] + self.offset[0],
+                                self.parent.get_grid_pos()[1] + self.offset[1])
 
             canvas_pos = self.parent.canvas.parent.mapFromGlobal(self.mapToGlobal(ev.pos()))  # к-т на холсте
-            mouse_grid_pos = ((canvas_pos.x() + self.parent.canvas.pos[0]) // self.parent.canvas.step,
-                              (canvas_pos.y() + self.parent.canvas.pos[1]) // self.parent.canvas.step)
-
+            mouse_grid_pos = (round((canvas_pos.x() ) / self.parent.canvas.step + self.parent.canvas.pos[0] / 20 - 0.5),
+                              round((canvas_pos.y() ) / self.parent.canvas.step + self.parent.canvas.pos[1] / 20 - 0.5))
+            print(current_grid_pos, mouse_grid_pos, self.parent.canvas.pos)
             if abs(mouse_grid_pos[0] - current_grid_pos[0]) + abs(mouse_grid_pos[1] - current_grid_pos[1]) > 0:
                 # Курсор отодвинулся
                 self.parent.canvas.parent.hide()
@@ -347,7 +347,7 @@ class Connection(QLabel):
             self.delete()
 
     def get_grid_pos(self):
-        """! Возвращает позицию на сеткеначала линии
+        """! Возвращает позицию на сетке начала линии
         """
         return self.pos[0]
 
@@ -449,7 +449,6 @@ class Connection2:
         self.p2 = p2
         self.line_h.pos = ((p1[0], p2[1]), (p2[0], p2[1]))
         self.line_v.pos = ((p1[0], p1[1]), (p1[0], p2[1]))
-        print((p1[0], p2[1]), (p2[0], p2[1]), (p1[0], p1[1]), (p1[0], p2[1]))
         if (p1[0], p2[1]) == (p2[0], p2[1]):
             self.line_h.delete()
             self.line_h = None
@@ -505,7 +504,7 @@ class MySchemeCanvas:
         for line in self.lines:
             line.render_line()
 
-        self.compile_connectors()
+        # self.compile_connectors()
 
     def compile_connectors(self):
         """! Провести расчет всех соединений (коннектор) на холсте
