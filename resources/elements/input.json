@@ -1,0 +1,8 @@
+{
+  "image": "resources/debug.png",
+  "size": [3, 3],
+  "connectors": {
+    "input1": [2, 1]
+  },
+  "operator": "input"
+}

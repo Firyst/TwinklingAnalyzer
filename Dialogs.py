@@ -126,8 +126,7 @@ class TableDialog(QDialog):
 
 class LogicSelectDialog(QDialog):
     output = None
-    images = {0: "resources/not.png", 1: "resources/and.png", 2: "resources/or.png", }
-    output_data = {0: 'not', 1: 'and', 2: 'or'}
+    output_data = {0: 'not', 1: 'and', 2: 'or', 3: 'input'}
 
     def __init__(self):
         super().__init__()
