@@ -2,7 +2,6 @@ from itertools import product
 from string import punctuation, ascii_letters, digits
 from string import ascii_lowercase as var_names
 
-
 # словарь замен для представления функции в стандартном python виде
 REPLACES = {' and ': ['&&', '*', ' и ', ' AND ', ' И ', '&', '⋀'],
             ' or ': ['||', '+', ' или ', ' OR ', ' ИЛИ ', '|', '⋁'],
@@ -10,6 +9,8 @@ REPLACES = {' and ': ['&&', '*', ' и ', ' AND ', ' И ', '&', '⋀'],
             ' ^ ': [' xor ', ' XOR ', '==']}
 # строка с корректными символами
 VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" + "()^ " + digits
+
+
 # print(VALID_SYMBOLS)
 
 
@@ -21,6 +22,7 @@ class LogicFunction:
     """
     Класс, описывающий логическое выражение.
     """
+
     def __init__(self, expression: str):
         """! Инициализация выражения
         @param expression  выражения в указанном формате
@@ -54,8 +56,7 @@ class LogicFunction:
 
         # проверяем корректность скобочек
         # ошибка вызовется внутри функции
-        test_value = self.get_result((0, ) * len(variables))
-
+        test_value = self.get_result((0,) * len(variables))
 
     def get_current_expression(self) -> str:
         """! Получить текущую запись логической функции.
@@ -174,7 +175,7 @@ class LogicFunction:
                             else:
                                 mas_glue[dif] = {different}
         # проверка, что упрощение возможно
-        mdnf = []
+        sdnf = []
         for key in mas_of_one.keys():
             a = mas_of_one.get(key)
             for i in a:
@@ -184,7 +185,7 @@ class LogicFunction:
                         term.append(cur_names[j])
                     else:
                         term.append('!' + cur_names[j])
-                mdnf.append('*'.join(term))
+                sdnf.append('*'.join(term))
         # склеиваем комбинации внутри группы,заменяем различные символы на Х, где ключ - позиция Х
         for key in mas_glue.keys():
             a = mas_glue.get(key)
@@ -220,6 +221,7 @@ class LogicFunction:
                 if kol == len(mas_one[i]):
                     final_table[key].append(mas_one[i])
         # составляем МДНФ
+        mdnf = []
         for key in final_table.keys():
             a = final_table.get(key)
             count_X = key.count('X')
@@ -241,7 +243,9 @@ class LogicFunction:
                         for j in b:
                             if i == j:
                                 final_table[key1].remove(j)
-        return LogicFunction('+'.join(mdnf))
+        if mdnf:
+            return LogicFunction('+'.join(mdnf))
+        return LogicFunction('+'.join(sdnf))
 
     def simplify_sknf(self):
         """Упрощение методом Квайна СКНФ
@@ -252,11 +256,11 @@ class LogicFunction:
         cur_names = self.get_variables()
         # входной список с котежами
         mas_zero = []
-        # создаем список переменных, которые дают 1 в результате
+        # создаем список переменных, которые дают 0 в результате
         for i in range(len(mas)):
             if mas[i][1] == 0:
                 mas_zero.append(mas[i][0])
-        if len(mas_zero)==0:
+        if len(mas_zero) == 0:
             return 1
         # создаем cписок, где распределяем по количеству нулей
         mas_of_zero = dict()
@@ -266,13 +270,13 @@ class LogicFunction:
             if count_0 in mas_of_zero:
                 mas_of_zero[count_0].append(line)
             else:
-                mas_of_zero[count_0]=[line]
+                mas_of_zero[count_0] = [line]
         # склеиваем комбинации между соседними группами,заменяем различные символы на Х, где ключ - позиция Х
-        mas_glue=dict()
+        mas_glue = dict()
         for key1 in mas_of_zero.keys():
             for key2 in mas_of_zero.keys():
-                a=mas_of_zero.get(key1)
-                b=mas_of_zero.get(key2)
+                a = mas_of_zero.get(key1)
+                b = mas_of_zero.get(key2)
                 for x in range(len(a)):
                     for y in range(len(b)):
                         kol = 0
@@ -281,14 +285,14 @@ class LogicFunction:
                                 kol += 1
                             else:
                                 dif = z + 1
-                        if kol == len(a[x])-1:
-                            different = tuple(''.join(map(str, a[x][:dif-1])) + 'X' + ''.join(map(str, a[x][dif:])))
+                        if kol == len(a[x]) - 1:
+                            different = tuple(''.join(map(str, a[x][:dif - 1])) + 'X' + ''.join(map(str, a[x][dif:])))
                             if dif in mas_glue:
                                 mas_glue[dif].add(different)
                             else:
-                                mas_glue[dif]= {different}
+                                mas_glue[dif] = {different}
         # проверка, что упрощение возможно
-        mknf = []
+        sknf = []
         for key in mas_of_zero.keys():
             a = mas_of_zero.get(key)
             for i in a:
@@ -298,64 +302,67 @@ class LogicFunction:
                         term.append(cur_names[j])
                     else:
                         term.append('!' + cur_names[j])
-                mknf.append('(' + '+'.join(term) + ')')
+                sknf.append('(' + '+'.join(term) + ')')
         # склеиваем комбинации внутри группы,заменяем различные символы на Х, где ключ - позиция Х
         for key in mas_glue.keys():
-            a=mas_glue.get(key)
-            a=list(a)
-            for i in range(len(a)-1):
-                kol=0
+            a = mas_glue.get(key)
+            a = list(a)
+            for i in range(len(a) - 1):
+                kol = 0
                 for j in range(len(a[i])):
-                    if a[i][j]==a[i+1][j]:
-                        kol+=1
+                    if a[i][j] == a[i + 1][j]:
+                        kol += 1
                     else:
-                        dif=j+1
-                if kol==len(a[i])-1:
+                        dif = j + 1
+                if kol == len(a[i]) - 1:
                     different = tuple(''.join(map(str, a[i][:dif - 1])) + 'X' + ''.join(map(str, a[i][dif:])))
                     mas_glue[key].add(different)
                     mas_glue[key].remove(a[i])
-                    mas_glue[key].remove(a[i+1])
-        #создаем словарь, где ключи - полученные склеенные выражения
-        final_table=dict()
+                    mas_glue[key].remove(a[i + 1])
+        # создаем словарь, где ключи - полученные склеенные выражения
+        final_table = dict()
         for key in mas_glue.keys():
-            a=mas_glue.get(key)
+            a = mas_glue.get(key)
             for imp in a:
                 if imp in final_table:
                     pass
                 else:
-                    final_table[imp]=[]
+                    final_table[imp] = []
         # в словарь добавляем первоначальные импликанты
         for i in range(len(mas_zero)):
             for key in final_table:
-                kol=key.count('X')
+                kol = key.count('X')
                 for j in range(len(mas_zero[i])):
-                    if str(mas_zero[i][j])==key[j]:
-                        kol+=1
-                if kol==len(mas_zero[i]):
+                    if str(mas_zero[i][j]) == key[j]:
+                        kol += 1
+                if kol == len(mas_zero[i]):
                     final_table[key].append(mas_zero[i])
         # составляем МКНФ
+        mknf = []
         for key in final_table.keys():
-            a=final_table.get(key)
-            count_X=key.count('X')
-            if count_X==len(key):
+            a = final_table.get(key)
+            count_X = key.count('X')
+            if count_X == len(key):
                 return 0
-            if len(a)!=0:
-                term=[]
+            if len(a) != 0:
+                term = []
                 for j in range(len(key)):
-                    if key[j]!='X':
-                        if key[j]=='0':
+                    if key[j] != 'X':
+                        if key[j] == '0':
                             term.append(cur_names[j])
                         else:
                             term.append('!' + cur_names[j])
                 mknf.append('(' + '+'.join(term) + ')')
             for key1 in final_table.keys():
-                if key1!=key:
-                    b=final_table.get(key1)
+                if key1 != key:
+                    b = final_table.get(key1)
                     for i in a:
                         for j in b:
-                            if i==j:
+                            if i == j:
                                 final_table[key1].remove(j)
-        return LogicFunction('*'.join(mknf))
+        if mknf:
+            return LogicFunction('*'.join(mknf))
+        return LogicFunction('*'.join(sknf))
 
 
 def generate_function_from_table(table: list, method=0) -> LogicFunction:
@@ -372,7 +379,7 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
     snf = []  # список с логическими выражениями
     for line in table:
         term = []  # список одного логического выражения
-        if line[1]==method:
+        if line[1] == method:
             for j in range(len(line[0])):
                 if line[0][j] == 1 and method == 1:
                     term.append(var_names[j])
@@ -393,9 +400,7 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
     return LogicFunction('*'.join(snf))
 
 
-
-
-tf = LogicFunction("А ИЛИ Б ИЛИ Б")
+tf = LogicFunction("А И Б И Б")
 print(tf.get_current_expression())
 print(tf.generate_boolean_table())
-print(tf.simplify_sknf().get_current_expression())
+print(tf.simplify_sdnf().get_current_expression())
