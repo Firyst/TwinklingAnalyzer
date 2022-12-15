@@ -7,6 +7,7 @@ from PyQt5.QtGui import QPixmap, QCursor
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QPushButton, QMenu, QLineEdit
 from Dialogs import *
 import json
+import copy
 
 
 def sgn(value):
@@ -26,32 +27,38 @@ def load_json(filename):
         return json.load(file)
 
 
+class SchemeCompilationError(Exception):
+    pass
+
+
 class ProgramWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         uic.loadUi('resources/Window.ui', self)
 
-        # привязка кнопок
-        self.buttonTypeManual.clicked.connect(self.createFunctionManual)
-        self.buttonGenerateFromScheme.clicked.connect(self.createFunctionFromScheme)
-        self.buttonGenerateFromTable.clicked.connect(self.createFunctionFromTable)
-
         self.canvas = MySchemeCanvas(self.schemeTab)
-        # self.canvas.new_widget(DraggableWidget(self.schemeTab, 'resources/hecker.jpg', self.canvas))
-        self.canvas.render_widgets()
-        self.schemeTab.contextMenuEvent = self.canvas_context_menu
+        self.schemeTab.hide()
 
-        # test_line = self.canvas.new_line(Connection(self.canvas, (0, 1), (5, 1), 0))
-        # test_line = self.canvas.new_line(Connection(self.canvas, (0, 0), (0, 5), 1))
-        # test_line = self.canvas.new_line(Connection(self.canvas, (1, 1), (1, 3), 1))
+        # отключаем меню схемы (оно не нужно по умолчанию)
+        self.menuScheme.setEnabled(0)
 
-        # test_con = Connection2(self.canvas, (0, 0), (3, -3))
+        # привязка кнопок
+        self.buttonTypeManual.clicked.connect(self.create_function_manual)
+        self.buttonGenerateFromScheme.clicked.connect(self.open_scheme_editor)
+        self.buttonGenerateFromTable.clicked.connect(self.create_function_from_table)
 
-        self.canvas.new_widget((DraggableWidget(self.schemeTab, 'output', self.canvas)))
-        self.canvas.render_widgets()
+        self.action_scheme_compile.triggered.connect(self.prepare_compilation)
+
+    def prepare_compilation(self):
+        """ !
+        """
+        try:
+            self.canvas.compile_scheme(1)
+        except SchemeCompilationError as err:
+            dialog = WarnDialog("Ошибка компиляции", err.args[0])
+            dialog.exec_()
 
     def canvas_context_menu(self, event):
-        print(event.x(), event.y())
         menu = QMenu(self.schemeTab)
         add_action = menu.addAction("Новый элемент")
         back_action = menu.addAction("Вернуться к началу координат")
@@ -61,34 +68,42 @@ class ProgramWindow(QMainWindow):
             dialog.exec_()
             if dialog.output is not None:
                 self.schemeTab.hide()  # для правильной отрисовки нужно отключить события обновления
-                widget = self.canvas.new_widget(DraggableWidget(self.schemeTab, dialog.output, self.canvas))
-                widget.grid_pos = ((self.canvas.pos[0] + event.x()) // self.canvas.step,
-                                   (self.canvas.pos[1] + event.y()) // self.canvas.step)
+                try:
+                    widget = DraggableWidget(self.schemeTab, dialog.output, self.canvas)
+                except InputException:
+                    self.schemeTab.show()
+                    return
+                self.canvas.new_widget(widget)
+                widget.grid_pos = ((event.x()) // self.canvas.step + self.canvas.pos[0] // 20,
+                                   (event.y()) // self.canvas.step + self.canvas.pos[1] // 20)
                 widget.render_object()
                 self.schemeTab.show()
-                print(len(self.canvas.widgets))
                 self.canvas.render_widgets()
         elif action == back_action:
             self.canvas.pos = (0, 0)
             self.canvas.render_widgets()
 
+    def open_scheme_editor(self):
+        self.stackedWidget.setCurrentIndex(1)
+        self.menuScheme.setEnabled(1)
+        # self.canvas.new_widget(DraggableWidget(self.schemeTab, 'resources/hecker.jpg', self.canvas))
+        self.canvas.render_widgets()
+        self.schemeTab.contextMenuEvent = self.canvas_context_menu
+
+        # добавить стандартный виджет выхода
+        self.canvas.new_widget((DraggableWidget(self.schemeTab, 'output', self.canvas)))
+        self.schemeTab.show()
+        self.canvas.render_widgets()
+
     def create_canvas_layout(self):
         pass
 
-    def canvas_mouse_event(self, ev):
-        print(ev.x(), ev.y())
-
     # create methods
-    def createFunctionManual(self):
-        self.canvas.new_widget(DraggableWidget(self.schemeTab, 'resources/hecker.jpg', self.canvas))
+    def create_function_manual(self):
         dialog = InputDialog()
         dialog.exec_()
 
-    def createFunctionFromScheme(self):
-        dialog = WarnDialog("Ошибка", "Рисунок некорректный")
-        dialog.exec_()
-
-    def createFunctionFromTable(self):
+    def create_function_from_table(self):
         dialog = TableDialog()
         dialog.exec_()
 
@@ -99,6 +114,7 @@ class DraggableWidget(QLabel):
         @param object_type: тип картинки. Возможные значения: and, or, not, inp, out, xor, debug
         """
         super().__init__(parent)
+        print(object_type)
         self.canvas = canvas
         self.connectors: List[Connector] = []
         self.properties = load_json(os.path.join('resources', 'elements', f'{object_type}.json'))
@@ -107,34 +123,37 @@ class DraggableWidget(QLabel):
         self.cdx, self.cdy = 0, 0  # стартовая позиция курсора
         self.dragging = False  # перетягивается ли объект сейчас
         self.grid_pos = (0, 0)
+        self.cmp_vis = 0  # посещался ли объект при компиляции
 
         self.setScaledContents(True)
 
-        self.image = object_type
+        self.obj_type = object_type
         self.setPixmap(QPixmap(self.properties['image']))
 
-        self.add_connectors()
-
         if object_type == 'input':
-            self.name_widget = QLineEdit(self)
-            self.name_widget.setFocusPolicy(Qt.StrongFocus)
-            self.name_widget.focus = False
-            self.name_widget.returnPressed.connect(self.defocus)
-
-    def defocus(self):
-        print(111)
-        self.name_widget.hide()
-        self.name_widget.focus = False
-        self.name_widget.deselect()
-        self.name_widget.show()
+            dialog = TinyInputDialog()
+            dialog.exec_()
+            if dialog.output is None:
+                self.deleteLater()
+                raise InputException("Не задано имя переменной")
+            self.name_widget = QLabel(self)
+            self.name_widget.setText(dialog.output)
+            self.name_widget.setAlignment(Qt.AlignBottom)
+            current_font = self.name_widget.font()
+            current_font.setPointSize(12)
+            self.name_widget.setFont(current_font)
+            self.properties['name'] = dialog.output
+        self.add_connectors()
 
     def add_connectors(self):
         for connector in self.properties['connectors']:
-            new_connector = Connector(self, self.properties['connectors'][connector])
+            new_connector = Connector(self, self.properties['connectors'][connector], connector)
             self.connectors.append(new_connector)
             self.canvas.connectors.append(new_connector)
 
     def contextMenuEvent(self, event):
+        if self.obj_type == "output":
+            return  # с выходным сигналом ничего сделать нельзя
         menu = QMenu(self)
         clone_action = menu.addAction("Дублировать")
         delete_action = menu.addAction("Удалить")
@@ -142,7 +161,7 @@ class DraggableWidget(QLabel):
         if action == clone_action:
             # дублировать объект
             self.canvas.parent.hide()  # для правильной отрисовки нужно отключить события обновления
-            widget = self.canvas.new_widget(DraggableWidget(self.canvas.parent, self.image, self.canvas))
+            widget = self.canvas.new_widget(DraggableWidget(self.canvas.parent, self.obj_type, self.canvas))
             widget.grid_pos = (self.grid_pos[0] + 1, self.grid_pos[1] + 1)
             self.canvas.parent.show()
             self.canvas.render_widgets()
@@ -209,16 +228,25 @@ class DraggableWidget(QLabel):
                              (QCursor.pos().y() + self.cdy + self.canvas.pos[1] * self.canvas.zoom) // self.canvas.step)
             self.render_object()
 
+    def __repr__(self):
+        return f"lObject({self.get_grid_pos()}, {self.obj_type})"
+
 
 class Connector(QLabel):
     """! Класс пина для соединения элементов
     """
 
-    def __init__(self, parent, offset: tuple):
+    def __init__(self, parent, offset: tuple, usage: str):
+        """! Инициализировать коннектор
+        @param parent: родитель, DraggableWidget/Connection
+        @param offset: смещение по сетке относительно родителя Tuple(int, int)
+        @param usage: тип коннектора input/output/bypass
+        """
         self.offset = offset
-        print(offset)
         super().__init__(parent)
         self.parent = parent
+        self.usage = usage
+        self.cmp_vis = 0  # посещался ли объект при компиляции
         self.setScaledContents(True)
         self.setPixmap(QPixmap("resources/connector_missing.png"))
         self.test_line = None
@@ -260,28 +288,27 @@ class Connector(QLabel):
         QApplication.restoreOverrideCursor()
 
     def mouseMoveEvent(self, ev: QtGui.QMouseEvent) -> None:
-        if self.underMouse():
-            current_grid_pos = ((self.geometry().x() + self.parent.geometry().x() + self.parent.canvas.pos[0])
-                                // self.parent.canvas.step,
-                                (self.geometry().y() + self.parent.geometry().y() + self.parent.canvas.pos[1])
-                                // self.parent.canvas.step)
+        current_grid_pos = (self.parent.get_grid_pos()[0] + self.offset[0],
+                            self.parent.get_grid_pos()[1] + self.offset[1])
 
-            canvas_pos = self.parent.canvas.parent.mapFromGlobal(self.mapToGlobal(ev.pos()))  # к-т на холсте
-            mouse_grid_pos = ((canvas_pos.x() + self.parent.canvas.pos[0]) // self.parent.canvas.step,
-                              (canvas_pos.y() + self.parent.canvas.pos[1]) // self.parent.canvas.step)
+        canvas_pos = self.parent.canvas.parent.mapFromGlobal(self.mapToGlobal(ev.pos()))  # к-т на холсте
+        mouse_grid_pos = (round((canvas_pos.x() ) / self.parent.canvas.step + self.parent.canvas.pos[0] / 20 - 0.5),
+                          round((canvas_pos.y() ) / self.parent.canvas.step + self.parent.canvas.pos[1] / 20 - 0.5))
+        if abs(mouse_grid_pos[0] - current_grid_pos[0]) + abs(mouse_grid_pos[1] - current_grid_pos[1]) > 0:
+            # Курсор отодвинулся
+            self.parent.canvas.parent.hide()
+            if self.test_line is not None:
+                self.test_line.delete()
+            self.test_line = Connection2(self.parent.canvas, current_grid_pos, mouse_grid_pos)
+            self.parent.canvas.render_widgets()
+            self.parent.canvas.parent.show()
+        else:
+            if self.test_line is not None:
+                self.test_line.delete()
+            self.test_line = None
 
-            if abs(mouse_grid_pos[0] - current_grid_pos[0]) + abs(mouse_grid_pos[1] - current_grid_pos[1]) > 0:
-                # Курсор отодвинулся
-                self.parent.canvas.parent.hide()
-                if self.test_line is not None:
-                    self.test_line.delete()
-                self.test_line = Connection2(self.parent.canvas, current_grid_pos, mouse_grid_pos)
-                self.parent.canvas.render_widgets()
-                self.parent.canvas.parent.show()
-            else:
-                if self.test_line is not None:
-                    self.test_line.delete()
-                self.test_line = None
+    def __repr__(self):
+        return f"Connector({self.get_grid_pos()}, {self.usage})"
 
 
 class Connection(QLabel):
@@ -298,10 +325,11 @@ class Connection(QLabel):
         self.canvas = parent  # холст, на котором находится линия
         self.orientation = orientation
         self.pos = (p1, p2)
+        self.cmp_vis = 0  # посещался ли объект при компиляции
 
         # создать и добавить два коннектора
-        self.connector1 = Connector(self, (0, 0))
-        self.connector2 = Connector(self, (0, 0))
+        self.connector1 = Connector(self, (0, 0), 'bypass')
+        self.connector2 = Connector(self, (0, 0), 'bypass')
         self.canvas.connectors.append(self.connector1)
         self.canvas.connectors.append(self.connector2)
 
@@ -347,7 +375,7 @@ class Connection(QLabel):
             self.delete()
 
     def get_grid_pos(self):
-        """! Возвращает позицию на сеткеначала линии
+        """! Возвращает позицию на сетке начала линии
         """
         return self.pos[0]
 
@@ -409,6 +437,9 @@ class Connection(QLabel):
         self.setGeometry(self.geometry().x(), self.geometry().y(), w, h)
         self.line.pixmap().scaled(self.line.geometry().width(), self.line.geometry().height(), Qt.IgnoreAspectRatio)
 
+    def __repr__(self):
+        return f"Line{self.pos}"
+
 
 class Connection2:
     """! Класс, опсиывающий двойную линию (вертикальная + горизонтальная), которой можно соеденить две
@@ -449,7 +480,6 @@ class Connection2:
         self.p2 = p2
         self.line_h.pos = ((p1[0], p2[1]), (p2[0], p2[1]))
         self.line_v.pos = ((p1[0], p1[1]), (p1[0], p2[1]))
-        print((p1[0], p2[1]), (p2[0], p2[1]), (p1[0], p1[1]), (p1[0], p2[1]))
         if (p1[0], p2[1]) == (p2[0], p2[1]):
             self.line_h.delete()
             self.line_h = None
@@ -505,10 +535,11 @@ class MySchemeCanvas:
         for line in self.lines:
             line.render_line()
 
-        self.compile_connectors()
+        # self.compile_connectors()
 
     def compile_connectors(self):
         """! Провести расчет всех соединений (коннектор) на холсте
+        @return сгрупированные по позиции коннекторы
         """
         # будем группировать по позиции на холсте
         grouped = dict()
@@ -528,6 +559,152 @@ class MySchemeCanvas:
                         connector.set_type("normal")
             elif len(grouped[pos]) == 1:
                 grouped[pos][0].set_type("missing")
+
+        return grouped
+
+    def compile_scheme(self, debug_on=1):
+        """! Преобразует схему в выражение
+        @return: LogicFunction от схемы
+        """
+        def debug_print(a):
+            # мини-функция для отладки
+            print(a)
+
+        def get_source(cur_w, vis=None):
+            """! Ищет первый подключенный выход к сети соединений
+            @param cur_w: начальный объект
+            @param vis: список посещенных
+            @return:
+            """
+            print('source', cur_w)
+            if vis is None:
+                vis = list()
+            vis.append(cur_w)
+            if type(cur_w) == Connector:
+                if cur_w.usage == 'out':
+                    return cur_w
+                elif cur_w.usage == 'bypass':
+                    # проходной коннектор
+                    connected = grouped[cur_w.get_grid_pos()]
+                    for con in connected:
+                        print("here", con.parent)
+                        if con not in vis:
+                            # смотрим, есть ли искомый коннектор в данной ветке
+                            if con.usage == 'out':
+                                return cur_w
+                            if con.usage[2:] == 'in':
+                                return
+                            print(vis)
+                            vis.append(con)
+                            res = get_source(con.parent, vis.copy())
+                            if res is not None:
+                                # если что-то нашлось, возвращаем
+                                return res
+                    # raise SchemeCompilationError("лол че ")
+            elif type(cur_w) == Connection:
+                # у линии может быть всего 2 конектора, поэтому просто проверяем каждый из них
+                if cur_w.connector1 not in vis:
+                    return get_source(cur_w.connector1, vis.copy())
+                if cur_w.connector2 not in vis:
+                    return get_source(cur_w.connector2, vis.copy())
+
+        def rec(cur_w, many=0):
+            """ ! Рекурсионный обход схемы
+            @param many: равен 1, если нужно игнорировать множественное посещение ААААААА все плохо
+            @param cur_w: текущий виджет
+            @return:
+            """
+            print("Обработка:", cur_w)
+            if cur_w.cmp_vis:
+                return ''
+            cur_w.cmp_vis = True
+            if type(cur_w) == DraggableWidget:
+                debug_print(f"Обработан элемент {cur_w.obj_type} на позиции {cur_w.get_grid_pos()}")
+
+                def get_con(con_name):
+                    """! Возвращает коннектор объекта с заданным именем.
+                    @param con_name: название
+                    @return: Connector
+                    """
+                    for con in cur_w.connectors:
+                        if con.usage == con_name:
+                            return con
+
+                # имеем дело с виджетом
+                if cur_w.obj_type == "input":
+                    # для инпута возвращаем название переменной
+                    return cur_w.properties['name']
+                elif cur_w.obj_type == "not":
+                    # NOT
+                    return f"not {rec(get_con('in1'))}"
+                elif cur_w.obj_type == 'output':
+                    # выход
+                    return rec(get_con("in"))
+                else:
+                    # бинарный опреатор - возвращаем сам оператор и операнды
+                    return f"({rec(get_con('in1'))} {cur_w.properties['operator']} {rec(get_con('in2'))})"
+            elif type(cur_w) == Connector:
+                if cur_w.usage == "out":
+                    # для выходного коннектора просто запускаем обход по родителю
+                    return rec(cur_w.parent)
+                elif cur_w.usage[:2] == "in":
+                    # входной коннектор - для него смотрим подключенные
+                    connected = grouped[cur_w.get_grid_pos()]
+                    if len(connected) == 1:
+                        raise SchemeCompilationError("Имеется неподключенный вход на элементе")
+                    elif (len(connected)) > 2:
+                        raise SchemeCompilationError("Ко входу подключено несколько выходов. Что с этим делать?")
+                    else:
+                        # всё хорошо
+                        debug_print(f"Обработан коннектор на позиции {cur_w.get_grid_pos()}\n"
+                                    f"Подключенные: {connected}")
+
+                        connected.remove(cur_w)
+                        return rec(connected[0])
+                elif cur_w.usage == "bypass":
+                    connected = grouped[cur_w.get_grid_pos()]
+                    debug_print(f"Подключенные: {connected}")
+                    # if len(connected) == 1:
+                    #     # неподключенный коннектор
+                    #     raise SchemeCompilationError("Имеется неподключенный коннектор")
+                    if len(connected) <= 2:
+                        # просто линейный коннектор
+                        for itsc_con in connected:
+                            if not itsc_con.parent.cmp_vis:  # ищем непосещенную линию
+                                itsc_con.cmp_vis = True
+                                return rec(itsc_con.parent)  # обрабатываем линию
+                    else:
+                        # пересечение
+                        cur_w.cmp_vis = 0
+                        return rec(get_source(cur_w))
+
+            elif type(cur_w) == Connection:
+                # у линии может быть всего 2 конектора, поэтому просто проверяем каждый из них
+                debug_print(f"Обработка линии")
+                if not cur_w.connector1.cmp_vis:
+                    return rec(cur_w.connector1)
+                if not cur_w.connector2.cmp_vis:
+                    return rec(cur_w.connector2)
+
+        debug_print("-= Начало компиляции =-")
+
+        # сброс посещений
+        for con in self.connectors:
+            con.cmp_vis = 0
+            con.parent.cmp_vis = 0
+
+        self.render_widgets()
+        grouped = self.compile_connectors()
+        debug_print(f"Коннекторы скомпилированы успешно, всего {len(grouped)} точек")
+
+        output_node = None
+        for widget in self.widgets:
+            if widget.obj_type == "output":
+                output_node = widget
+                break
+        debug_print("Найден выходной коннектор")
+        print(rec(output_node))
+
 
     def set_zoom(self, zoom: int):
         w, h = self.parent.size().width(), self.parent.size().height()

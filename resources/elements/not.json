@@ -2,8 +2,8 @@
   "image": "resources/not.png",
   "size": [5, 3],
   "connectors": {
-    "input1": [0, 1],
-    "output": [4, 1]
+    "in1": [0, 1],
+    "out": [4, 1]
   },
   "operator": "not"
 }

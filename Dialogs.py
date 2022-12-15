@@ -4,6 +4,8 @@ from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QTableWidgetItem
 from itertools import product
 from LogicFunction import LogicFunction, InputException
+from string import ascii_letters
+VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 
 
 class InputDialog(QDialog):
@@ -31,6 +33,38 @@ class InputDialog(QDialog):
             self.output = None
             dialog = WarnDialog("Ошибка", error.args[0])
             dialog.exec_()
+
+    def close_dialog(self):
+        self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
+        self.close()
+
+
+class TinyInputDialog(QDialog):
+    output = None
+
+    def __init__(self):
+        super().__init__()
+        uic.loadUi('resources/InputDialogTiny.ui', self)
+        self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
+
+        self.setWindowTitle("Ввод переменной")
+        self.buttonCancel.clicked.connect(self.close_dialog)
+        self.buttonConfirm.clicked.connect(self.confirm_input)
+
+    def confirm_input(self):
+        if not self.inputLine.text():
+            self.output = None
+            dialog = WarnDialog("Ошибка", "Введите название")
+            dialog.exec_()
+            return
+        if any(map(lambda i: self.inputLine.text()[i] not in VALID_SYMBOLS, range(len(self.inputLine.text())))):
+            # есть некорректные символы!
+            dialog = WarnDialog("Ошибка", "Некорректные символы. Можно использовать только символы "
+                                              "русского и латинского алфавита.")
+            dialog.exec_()
+            return
+        self.output = self.inputLine.text()
+        self.close()
 
     def close_dialog(self):
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт

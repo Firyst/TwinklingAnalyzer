@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>604</width>
-    <height>442</height>
+    <width>800</width>
+    <height>600</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,171 +16,201 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <property name="leftMargin">
-     <number>16</number>
+     <number>8</number>
     </property>
     <property name="topMargin">
-     <number>16</number>
+     <number>8</number>
     </property>
     <property name="rightMargin">
-     <number>16</number>
+     <number>8</number>
     </property>
     <property name="bottomMargin">
-     <number>16</number>
+     <number>8</number>
     </property>
     <item>
-     <widget class="QLabel" name="labelCurrentFunction">
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-       </font>
+     <widget class="QStackedWidget" name="stackedWidget">
+      <property name="currentIndex">
+       <number>0</number>
       </property>
-      <property name="text">
-       <string>Текущее выражение:</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="QLineEdit" name="functionEdit">
-      <property name="font">
-       <font>
-        <pointsize>10</pointsize>
-       </font>
-      </property>
-      <property name="text">
-       <string>Func = !x1*!x2*!x3*!x4)+(!x1 * !x2 * !x3 * x4)+(!x1*!x2*x3*!x4)+(!x1 * x2 * !x3 * x4)+(!x1*x2*x3*x4)+(x1*!x2*!x3*!x4)+(x1*!x2*x3*!x4)+(x1*x2*!x3*!x4)+(x1*x2*x3*x4)</string>
-      </property>
-      <property name="frame">
-       <bool>false</bool>
-      </property>
-      <property name="readOnly">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <layout class="QVBoxLayout" name="mainLayout">
-      <item>
-       <widget class="QTabWidget" name="tabWidget">
-        <property name="font">
-         <font>
-          <pointsize>10</pointsize>
-         </font>
-        </property>
-        <property name="currentIndex">
-         <number>2</number>
-        </property>
-        <widget class="QWidget" name="createTab">
-         <attribute name="title">
-          <string>Запись</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0">
-          <property name="spacing">
-           <number>10</number>
+      <widget class="QWidget" name="page">
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QLabel" name="labelCurrentFunction">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
           </property>
-          <item>
-           <widget class="QLabel" name="label">
-            <property name="font">
-             <font>
-              <pointsize>12</pointsize>
-             </font>
+          <property name="text">
+           <string>Текущее выражение:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="functionEdit">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Func = !x1*!x2*!x3*!x4)+(!x1 * !x2 * !x3 * x4)+(!x1*!x2*x3*!x4)+(!x1 * x2 * !x3 * x4)+(!x1*x2*x3*x4)+(x1*!x2*!x3*!x4)+(x1*!x2*x3*!x4)+(x1*x2*!x3*!x4)+(x1*x2*x3*x4)</string>
+          </property>
+          <property name="frame">
+           <bool>false</bool>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="tabPosition">
+           <enum>QTabWidget::South</enum>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="createTab">
+           <attribute name="title">
+            <string>Запись</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0">
+            <property name="spacing">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Выберите удобный способ задания логической функции:</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCommandLinkButton" name="buttonTypeManual">
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+                <pointsize>12</pointsize>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Записать функцию вручную</string>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCommandLinkButton" name="buttonGenerateFromTable">
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+                <pointsize>12</pointsize>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Сгенерировать функцию по таблице истиннсти</string>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCommandLinkButton" name="buttonGenerateFromScheme">
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+                <pointsize>12</pointsize>
+                <weight>50</weight>
+                <bold>false</bold>
+               </font>
+              </property>
+              <property name="text">
+               <string>Построить функцию по схеме</string>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>16</width>
+                <height>16</height>
+               </size>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="analyzeTab">
+           <attribute name="title">
+            <string>Анализ</string>
+           </attribute>
+           <widget class="QLabel" name="label_2">
+            <property name="geometry">
+             <rect>
+              <x>120</x>
+              <y>80</y>
+              <width>261</width>
+              <height>111</height>
+             </rect>
             </property>
             <property name="text">
-             <string>Выберите удобный способ задания логической функции:</string>
+             <string>TextLabel</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
             </property>
            </widget>
-          </item>
-          <item>
-           <widget class="QCommandLinkButton" name="buttonTypeManual">
-            <property name="font">
-             <font>
-              <family>Segoe UI</family>
-              <pointsize>12</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Записать функцию вручную</string>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCommandLinkButton" name="buttonGenerateFromScheme">
-            <property name="font">
-             <font>
-              <family>Segoe UI</family>
-              <pointsize>12</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Сгенерировать функцию из схемы</string>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCommandLinkButton" name="buttonGenerateFromTable">
-            <property name="font">
-             <font>
-              <family>Segoe UI</family>
-              <pointsize>12</pointsize>
-              <weight>50</weight>
-              <bold>false</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Сгенерировать функцию по таблице истиннсти</string>
-            </property>
-            <property name="iconSize">
-             <size>
-              <width>16</width>
-              <height>16</height>
-             </size>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="verticalSpacer">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>20</width>
-              <height>40</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="analyzeTab">
-         <attribute name="title">
-          <string>Анализ</string>
-         </attribute>
-        </widget>
-        <widget class="QWidget" name="schemeTab">
-         <attribute name="title">
-          <string>Схема</string>
-         </attribute>
-         <layout class="QVBoxLayout" name="verticalLayout_3" stretch=""/>
-        </widget>
-       </widget>
-      </item>
-     </layout>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="page_2">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QWidget" name="schemeTab" native="true"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -189,18 +219,10 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>604</width>
+     <width>800</width>
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFIle">
-    <property name="title">
-     <string>Файл</string>
-    </property>
-    <addaction name="actionNew"/>
-    <addaction name="actionSave"/>
-    <addaction name="actionSave_As"/>
-   </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Помощь</string>
@@ -209,10 +231,21 @@
     <addaction name="actionSource_code"/>
     <addaction name="actionAbout"/>
    </widget>
-   <addaction name="menuFIle"/>
+   <widget class="QMenu" name="menuScheme">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="title">
+     <string>Схема</string>
+    </property>
+    <addaction name="action_scheme_open"/>
+    <addaction name="action_scheme_save"/>
+    <addaction name="action_scheme_compile"/>
+    <addaction name="action_scheme_quit"/>
+   </widget>
    <addaction name="menuHelp"/>
+   <addaction name="menuScheme"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="actionNew">
    <property name="text">
     <string>Новый проект</string>
@@ -241,6 +274,26 @@
   <action name="actionSource_code">
    <property name="text">
     <string>Исходный код</string>
+   </property>
+  </action>
+  <action name="action_scheme_open">
+   <property name="text">
+    <string>Открыть схему</string>
+   </property>
+  </action>
+  <action name="action_scheme_save">
+   <property name="text">
+    <string>Сохранить схему</string>
+   </property>
+  </action>
+  <action name="action_scheme_compile">
+   <property name="text">
+    <string>Скомпилировать схему</string>
+   </property>
+  </action>
+  <action name="action_scheme_quit">
+   <property name="text">
+    <string>Закрыть редактор</string>
    </property>
   </action>
  </widget>
