@@ -30,7 +30,7 @@
     <widget class="QComboBox" name="selector">
      <property name="font">
       <font>
-       <pointsize>10</pointsize>
+       <pointsize>12</pointsize>
       </font>
      </property>
      <item>
@@ -46,6 +46,11 @@
      <item>
       <property name="text">
        <string>OR (ИЛИ)</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>XOR (Искл. ИЛИ)</string>
       </property>
      </item>
      <item>

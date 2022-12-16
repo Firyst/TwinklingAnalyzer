@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Анализатор функций</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -34,36 +34,54 @@
       </property>
       <widget class="QWidget" name="page">
        <layout class="QVBoxLayout" name="verticalLayout_4">
+        <property name="leftMargin">
+         <number>8</number>
+        </property>
+        <property name="topMargin">
+         <number>8</number>
+        </property>
+        <property name="rightMargin">
+         <number>8</number>
+        </property>
         <item>
-         <widget class="QLabel" name="labelCurrentFunction">
+         <widget class="QLabel" name="function_text">
           <property name="font">
            <font>
-            <pointsize>10</pointsize>
+            <family>Source Code Pro Black</family>
+            <pointsize>12</pointsize>
+            <weight>50</weight>
+            <italic>false</italic>
+            <bold>false</bold>
            </font>
           </property>
+          <property name="focusPolicy">
+           <enum>Qt::TabFocus</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">background-color: rgb(255, 255, 255);
+padding: 2px;
+</string>
+          </property>
+          <property name="frameShape">
+           <enum>QFrame::Box</enum>
+          </property>
+          <property name="frameShadow">
+           <enum>QFrame::Sunken</enum>
+          </property>
+          <property name="lineWidth">
+           <number>1</number>
+          </property>
+          <property name="midLineWidth">
+           <number>0</number>
+          </property>
           <property name="text">
-           <string>Текущее выражение:</string>
+           <string>Функция не задана</string>
           </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLineEdit" name="functionEdit">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Func = !x1*!x2*!x3*!x4)+(!x1 * !x2 * !x3 * x4)+(!x1*!x2*x3*!x4)+(!x1 * x2 * !x3 * x4)+(!x1*x2*x3*x4)+(x1*!x2*!x3*!x4)+(x1*!x2*x3*!x4)+(x1*x2*!x3*!x4)+(x1*x2*x3*x4)</string>
-          </property>
-          <property name="frame">
-           <bool>false</bool>
-          </property>
-          <property name="readOnly">
+          <property name="wordWrap">
            <bool>true</bool>
+          </property>
+          <property name="textInteractionFlags">
+           <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByMouse</set>
           </property>
          </widget>
         </item>
@@ -72,13 +90,14 @@
           <property name="font">
            <font>
             <pointsize>10</pointsize>
+            <stylestrategy>PreferDefault</stylestrategy>
            </font>
           </property>
           <property name="tabPosition">
            <enum>QTabWidget::South</enum>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>1</number>
           </property>
           <widget class="QWidget" name="createTab">
            <attribute name="title">
@@ -93,10 +112,14 @@
               <property name="font">
                <font>
                 <pointsize>12</pointsize>
+                <stylestrategy>PreferDefault</stylestrategy>
                </font>
               </property>
               <property name="text">
-               <string>Выберите удобный способ задания логической функции:</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Вас приветствует анализатор логических функций.&lt;/p&gt;&lt;p&gt;Для начала работы выберите удобный способ задания логической функции:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -108,6 +131,7 @@
                 <pointsize>12</pointsize>
                 <weight>50</weight>
                 <bold>false</bold>
+                <stylestrategy>PreferDefault</stylestrategy>
                </font>
               </property>
               <property name="text">
@@ -129,6 +153,7 @@
                 <pointsize>12</pointsize>
                 <weight>50</weight>
                 <bold>false</bold>
+                <stylestrategy>PreferDefault</stylestrategy>
                </font>
               </property>
               <property name="text">
@@ -150,10 +175,11 @@
                 <pointsize>12</pointsize>
                 <weight>50</weight>
                 <bold>false</bold>
+                <stylestrategy>PreferDefault</stylestrategy>
                </font>
               </property>
               <property name="text">
-               <string>Построить функцию по схеме</string>
+               <string>Перейти в редактор схем</string>
               </property>
               <property name="iconSize">
                <size>
@@ -178,24 +204,176 @@
             </item>
            </layout>
           </widget>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>Преобразования</string>
+           </attribute>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QLabel" name="label_2">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <stylestrategy>PreferDefault</stylestrategy>
+               </font>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;В данной вкладке можно выполнять различные преобразования. Для выполнения преобразования нужно выбрать тип преобразования и нажать на кнопку &amp;quot;Преобразовать&amp;quot;, результат появится в окне вывода. Его можно сохранить как текущую функцию, воспользовавшись кнопкой снизу.&lt;/p&gt;&lt;p&gt;Доступные преобразования:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+              <property name="wordWrap">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,1">
+              <item>
+               <widget class="QComboBox" name="conversion_selector">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <stylestrategy>PreferDefault</stylestrategy>
+                 </font>
+                </property>
+                <item>
+                 <property name="text">
+                  <string>Символьная запись</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Математическая запись</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Юникод-запись</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Английская запись</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Русская запись</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>СКНФ</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>СДНФ</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Упрощенная МКНФ</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Упрощенная МДНФ</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="button_convert">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <stylestrategy>PreferDefault</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Преобразовать выражение</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_3">
+              <property name="font">
+               <font>
+                <pointsize>12</pointsize>
+                <stylestrategy>PreferDefault</stylestrategy>
+               </font>
+              </property>
+              <property name="text">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Вывод:&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPlainTextEdit" name="conversion_log">
+              <property name="font">
+               <font>
+                <family>Source Code Pro Black</family>
+                <pointsize>12</pointsize>
+                <stylestrategy>PreferDefault</stylestrategy>
+               </font>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+              <property name="plainText">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_3">
+              <item>
+               <widget class="QPushButton" name="conversion_save">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <stylestrategy>PreferDefault</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Сохранить как текущую функцию</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="conversion_clear">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                  <stylestrategy>PreferDefault</stylestrategy>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Очистить вывод</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </widget>
           <widget class="QWidget" name="analyzeTab">
            <attribute name="title">
             <string>Анализ</string>
            </attribute>
-           <widget class="QLabel" name="label_2">
+           <widget class="QLabel" name="label_4">
             <property name="geometry">
              <rect>
-              <x>120</x>
-              <y>80</y>
-              <width>261</width>
-              <height>111</height>
+              <x>260</x>
+              <y>150</y>
+              <width>131</width>
+              <height>71</height>
              </rect>
             </property>
             <property name="text">
-             <string>TextLabel</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+             <string>😥😥😥</string>
             </property>
            </widget>
           </widget>
@@ -229,7 +407,7 @@
     </property>
     <addaction name="actionDocumentation"/>
     <addaction name="actionSource_code"/>
-    <addaction name="actionAbout"/>
+    <addaction name="action_about"/>
    </widget>
    <widget class="QMenu" name="menuScheme">
     <property name="enabled">
@@ -241,6 +419,7 @@
     <addaction name="action_scheme_open"/>
     <addaction name="action_scheme_save"/>
     <addaction name="action_scheme_compile"/>
+    <addaction name="action_scheme_clear"/>
     <addaction name="action_scheme_quit"/>
    </widget>
    <addaction name="menuHelp"/>
@@ -266,7 +445,7 @@
     <string>Документация</string>
    </property>
   </action>
-  <action name="actionAbout">
+  <action name="action_about">
    <property name="text">
     <string>О программе</string>
    </property>
@@ -294,6 +473,11 @@
   <action name="action_scheme_quit">
    <property name="text">
     <string>Закрыть редактор</string>
+   </property>
+  </action>
+  <action name="action_scheme_clear">
+   <property name="text">
+    <string>Очистить всё</string>
    </property>
   </action>
  </widget>

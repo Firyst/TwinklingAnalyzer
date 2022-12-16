@@ -5,5 +5,5 @@
     "in1": [0, 1],
     "out": [4, 1]
   },
-  "operator": "not"
+  "operator": "!"
 }

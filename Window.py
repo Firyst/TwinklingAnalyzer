@@ -3,16 +3,16 @@ import os
 from typing import List, Tuple
 from PyQt5 import uic, QtCore, QtGui
 from PyQt5.QtCore import Qt, QSize, QPoint
-from PyQt5.QtGui import QPixmap, QCursor
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QPushButton, QMenu, QLineEdit
+from PyQt5.QtGui import QPixmap, QCursor, QIcon
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QPushButton, QMenu, QFileDialog
 from Dialogs import *
+from LogicFunction import *
 import json
 import copy
 
 
 def sgn(value):
-    """
-    Функция знака
+    """! Функция знака
     @param value: входное значение
     @return: value > 0: 1, value < 0: -1, else 0
     """
@@ -39,24 +39,121 @@ class ProgramWindow(QMainWindow):
         self.canvas = MySchemeCanvas(self.schemeTab)
         self.schemeTab.hide()
 
+        self.setWindowIcon(QIcon("resources/not.png"))
+
         # отключаем меню схемы (оно не нужно по умолчанию)
         self.menuScheme.setEnabled(0)
+
+        # сама функция, с которой работаем
+        self.function = None
 
         # привязка кнопок
         self.buttonTypeManual.clicked.connect(self.create_function_manual)
         self.buttonGenerateFromScheme.clicked.connect(self.open_scheme_editor)
         self.buttonGenerateFromTable.clicked.connect(self.create_function_from_table)
 
-        self.action_scheme_compile.triggered.connect(self.prepare_compilation)
+        self.action_scheme_compile.triggered.connect(self.prepare_compilation)  # компиляция схемы
+        self.action_scheme_clear.triggered.connect(self.clear_canvas)  # очистка схемы
+        self.action_scheme_open.triggered.connect(self.load_scheme)  # загрузка схемы
+        self.action_scheme_save.triggered.connect(self.save_scheme)  # сохранение схемы
+        self.action_scheme_quit.triggered.connect(self.close_scheme_editor)  # закрытие схемы
+
+        self.button_convert.clicked.connect(self.run_conversion)
+        self.conversion_save.clicked.connect(self.save_conversion)
+        self.conversion_clear.clicked.connect(self.clear_conversion_log)
+
+        self.action_about.triggered.connect(self.view_about_page)  # о программе
+
+        self.setup_editor()
+
+    # ПРЕОБРАЗОВАНИЯ
+
+    def run_conversion(self):
+        conv_type = self.conversion_selector.currentIndex()
+
+        if self.function is None:
+            dialog = WarnDialog("Внимание", 'Сейчас исходная функция не задана.\n'
+                                            'Задайте ее на вкладке "запись".')
+            dialog.exec_()
+            return
+
+        if conv_type <= 4:
+            # просто другое отображение
+            converted = ("not ", " or ", " and ", " ^ ")  # заменяемые символы
+            conversions = (("!", " | ", " & ", " ^ "),
+                           ("!", " + ", " * ", " == "),
+                           ("¬", " ⋁ ", " ⋀ ", " ⊕ "),
+                           ("not ", " or ", " and ", " xor "),
+                           ("не ", " или ", " и ", " ^ "))
+            exp = self.function.get_current_expression()
+            for r_i in range(len(converted)):
+                exp = exp.replace(converted[r_i], conversions[conv_type][r_i])
+            self.conversion_log.setPlainText("F = " + exp)
+        elif conv_type <= 6:
+            # СДНФ/СКНФ
+            new_func = generate_function_from_table(self.function.generate_boolean_table(), conv_type % 2)
+            self.conversion_log.setPlainText("F = " + new_func.exp.replace('  ', ' '))
+        elif conv_type == 7:
+            # МКНФ
+            new_func = self.function.simplify_sknf()
+            self.conversion_log.setPlainText("F = " + new_func.exp.replace('  ', ' '))
+        elif conv_type == 8:
+            # МДНФ
+            new_func = self.function.simplify_sdnf()
+            self.conversion_log.setPlainText("F = " + new_func.exp.replace('  ', ' '))
+
+    def save_conversion(self):
+        if self.conversion_log.toPlainText():
+            self.function = LogicFunction(self.conversion_log.toPlainText()[4:])
+            self.function_text.setText(self.conversion_log.toPlainText())
+            self.clear_conversion_log()
+
+    def clear_conversion_log(self):
+        self.conversion_log.setPlainText("")
+
+    # UTILITY
+
+    def view_about_page(self):
+        dialog = WarnDialog("О программе", "Анализатор логических функций TwinklingAnalyzer v1.0 \n\n"
+                                           "Баулин Филипп\nСеребрякова Ольга\nМИЭМ НИУ ВШЭ, 2022\n\n"
+                                           "https://github.com/Firyst/TwinklingAnalyzer")
+        dialog.exec_()
+
+    # ФУНКЦИИ ДЛЯ СХЕМЫ
 
     def prepare_compilation(self):
         """ !
         """
         try:
-            self.canvas.compile_scheme(1)
+            func = self.canvas.compile_scheme(1)
+            if func is None:
+                return
+            dialog = ConfirmDialog(f"Результат компиляции",
+                                   f"Компиляция прошла успешно. Полученное выражение:\nF = {func.exp}\n"
+                                   f"Сохранить результат?")
+            dialog.exec_()
+            if dialog.output:
+                # сохраняем функцию
+                self.function = func
+                self.function_text.setText("F + " + func.get_current_expression())
+                self.close_scheme_editor()
         except SchemeCompilationError as err:
             dialog = WarnDialog("Ошибка компиляции", err.args[0])
             dialog.exec_()
+
+    def clear_canvas(self):
+        dialog = ConfirmDialog("Подтвердите действие", "Вы действительно хотите удалить все объекты?\n"
+                                                       "Это действие необратимо.")
+        dialog.exec_()
+        if dialog.output == 1:
+            self.schemeTab.hide()
+            self.canvas.clear_all()
+
+            # добавить стандартный виджет выхода
+            obj = self.canvas.new_widget((DraggableWidget(self.schemeTab, 'output', self.canvas)))
+            obj.grid_pos = (1, 1)
+            self.schemeTab.show()
+            self.canvas.render_widgets()
 
     def canvas_context_menu(self, event):
         menu = QMenu(self.schemeTab)
@@ -83,33 +180,71 @@ class ProgramWindow(QMainWindow):
             self.canvas.pos = (0, 0)
             self.canvas.render_widgets()
 
+    def close_scheme_editor(self):
+        self.stackedWidget.setCurrentIndex(0)
+        self.menuScheme.setEnabled(0)
+
     def open_scheme_editor(self):
         self.stackedWidget.setCurrentIndex(1)
         self.menuScheme.setEnabled(1)
         # self.canvas.new_widget(DraggableWidget(self.schemeTab, 'resources/hecker.jpg', self.canvas))
         self.canvas.render_widgets()
+
+    def setup_editor(self):
         self.schemeTab.contextMenuEvent = self.canvas_context_menu
 
         # добавить стандартный виджет выхода
-        self.canvas.new_widget((DraggableWidget(self.schemeTab, 'output', self.canvas)))
+        obj = self.canvas.new_widget((DraggableWidget(self.schemeTab, 'output', self.canvas)))
+        obj.grid_pos = (1, 1)
         self.schemeTab.show()
         self.canvas.render_widgets()
 
-    def create_canvas_layout(self):
-        pass
+    def save_scheme(self):
+        dialog = QFileDialog(self)
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if dialog.exec_():
+            filename = dialog.selectedFiles()[0]
+            if '.json' not in filename:
+                filename += '.json'
+            with open(filename, 'w') as file:
+                file.write(json.dumps(self.canvas.save_scheme(), indent=2))
+
+    def load_scheme(self):
+        dialog = QFileDialog(self)
+        dialog.setAcceptMode(QFileDialog.AcceptOpen)
+        dialog.setNameFilter("JSON (*.json)")
+        if dialog.exec_():
+            with open(dialog.selectedFiles()[0], 'r') as file:
+                data = json.load(file)
+                if data['filetype'] == "TA-scheme-v1":
+                    # проверка валидности
+                    self.schemeTab.hide()
+                    self.canvas.load_scheme(data)
+                    self.schemeTab.show()
+                    self.canvas.render_widgets()
+                else:
+                    dialog = WarnDialog("Ошибка", "Не удаётся прочитать файл.\n"
+                                                  "Возможно он был поврежден или не является файлом схемы.")
+                    dialog.exec_()
 
     # create methods
     def create_function_manual(self):
         dialog = InputDialog()
         dialog.exec_()
+        if dialog.output:
+            self.function = dialog.output
+            self.function_text.setText("F = " + dialog.inputFunction.text())
 
     def create_function_from_table(self):
         dialog = TableDialog()
         dialog.exec_()
+        if dialog.output:
+            self.function = dialog.output
+            self.function_text.setText("F = " + dialog.output.exp)
 
 
 class DraggableWidget(QLabel):
-    def __init__(self, parent: QWidget, object_type: str, canvas):
+    def __init__(self, parent: QWidget, object_type: str, canvas, override_name=''):
         """! Создать виджет объекта схемы
         @param object_type: тип картинки. Возможные значения: and, or, not, inp, out, xor, debug
         """
@@ -131,18 +266,24 @@ class DraggableWidget(QLabel):
         self.setPixmap(QPixmap(self.properties['image']))
 
         if object_type == 'input':
-            dialog = TinyInputDialog()
-            dialog.exec_()
-            if dialog.output is None:
-                self.deleteLater()
-                raise InputException("Не задано имя переменной")
+            if override_name:
+                # имя переменной заранее задано, поэтому диалог не нужен
+                res = override_name
+            else:
+                # если просто создаем объект, то вызываем диалог
+                dialog = TinyInputDialog()
+                dialog.exec_()
+                res = dialog.output
+                if dialog.output is None:
+                    self.deleteLater()
+                    raise InputException("Не задано имя переменной")
             self.name_widget = QLabel(self)
-            self.name_widget.setText(dialog.output)
+            self.name_widget.setText(res)
             self.name_widget.setAlignment(Qt.AlignBottom)
             current_font = self.name_widget.font()
             current_font.setPointSize(12)
             self.name_widget.setFont(current_font)
-            self.properties['name'] = dialog.output
+            self.properties['name'] = res
         self.add_connectors()
 
     def add_connectors(self):
@@ -161,7 +302,10 @@ class DraggableWidget(QLabel):
         if action == clone_action:
             # дублировать объект
             self.canvas.parent.hide()  # для правильной отрисовки нужно отключить события обновления
-            widget = self.canvas.new_widget(DraggableWidget(self.canvas.parent, self.obj_type, self.canvas))
+            try:
+                widget = self.canvas.new_widget(DraggableWidget(self.canvas.parent, self.obj_type, self.canvas))
+            except InputException:
+                return
             widget.grid_pos = (self.grid_pos[0] + 1, self.grid_pos[1] + 1)
             self.canvas.parent.show()
             self.canvas.render_widgets()
@@ -512,6 +656,65 @@ class MySchemeCanvas:
 
         self.render_widgets()
 
+    def clear_all(self):
+        for con in self.connectors:
+            con.parent.deleteLater()
+            con.deleteLater()
+        self.widgets = []
+        self.lines = []
+        self.connectors = []
+
+    def save_scheme(self) -> dict:
+        """! Преобразовать схему в JSON-словарь
+        @return: dict со всеми элементами
+        """
+        output_data = {'filetype': 'TA-scheme-v1', 'objects': []}
+
+        added = set()  # учет всех добавленных
+        for con in self.connectors:
+            if con.parent not in added:
+                # проверяем родителя коннектора
+                obj = {}
+                if type(con.parent) == DraggableWidget:
+                    # логический элемент
+                    obj['type'] = 'Element'
+                    obj['obj_type'] = con.parent.obj_type
+                    obj['pos'] = con.parent.get_grid_pos()
+                    if 'name' in con.parent.properties:
+                        obj['name'] = con.parent.properties['name']
+                elif type(con.parent) == Connection:
+                    # линия
+                    obj['type'] = 'Line'
+                    obj['pos1'] = con.parent.pos[0]
+                    obj['pos2'] = con.parent.pos[1]
+                    obj['orientation'] = con.parent.orientation
+                if obj:
+                    output_data['objects'].append(obj)
+                    added.add(con.parent)
+            if con not in added:
+                # проверяем сам коннектор
+                # а зачем..
+                pass
+        return output_data
+
+    def load_scheme(self, objects: dict):
+        """! Загружает схему из JSON-словаря
+        @param objects: результат json.load()
+        """
+        self.clear_all()
+        for obj in objects['objects']:
+            if obj['type'] == 'Element':
+                if 'name' in obj:
+                    # это input (у него есть особенный параметр - имя)
+                    new = self.new_widget(DraggableWidget(self.parent, obj['obj_type'], self, obj['name']))
+                else:
+                    # это всё остальное
+                    new = self.new_widget(DraggableWidget(self.parent, obj['obj_type'], self))
+                new.grid_pos = tuple(obj['pos'])
+            elif obj['type'] == 'Line':
+                self.new_line(Connection(self, tuple(obj['pos1']), tuple(obj['pos2']), obj['orientation']))
+
+
     def new_widget(self, widget: DraggableWidget):
         """ ! Добавить виджет на холст
         @param widget: Виджет класса DraggableWidget
@@ -585,7 +788,7 @@ class MySchemeCanvas:
                     return cur_w
                 elif cur_w.usage == 'bypass':
                     # проходной коннектор
-                    connected = grouped[cur_w.get_grid_pos()]
+                    connected = grouped[cur_w.get_grid_pos()].copy()
                     for con in connected:
                         print("here", con.parent)
                         if con not in vis:
@@ -598,6 +801,7 @@ class MySchemeCanvas:
                             vis.append(con)
                             res = get_source(con.parent, vis.copy())
                             if res is not None:
+                                debug_print(f"Обходчик ветвей нашел {res}")
                                 # если что-то нашлось, возвращаем
                                 return res
                     # raise SchemeCompilationError("лол че ")
@@ -608,16 +812,19 @@ class MySchemeCanvas:
                 if cur_w.connector2 not in vis:
                     return get_source(cur_w.connector2, vis.copy())
 
-        def rec(cur_w, many=0):
+        def rec(cur_w, vis):
             """ ! Рекурсионный обход схемы
-            @param many: равен 1, если нужно игнорировать множественное посещение ААААААА все плохо
+            @param vis: Посещенные объекты
             @param cur_w: текущий виджет
-            @return:
+            @return: выражение
             """
+            if vis is None:
+                vis = set()
             print("Обработка:", cur_w)
-            if cur_w.cmp_vis:
+            if cur_w in vis:
                 return ''
-            cur_w.cmp_vis = True
+            # cur_w.cmp_vis = True
+            vis.add(cur_w)
             if type(cur_w) == DraggableWidget:
                 debug_print(f"Обработан элемент {cur_w.obj_type} на позиции {cur_w.get_grid_pos()}")
 
@@ -636,20 +843,20 @@ class MySchemeCanvas:
                     return cur_w.properties['name']
                 elif cur_w.obj_type == "not":
                     # NOT
-                    return f"not {rec(get_con('in1'))}"
+                    return f"not {rec(get_con('in1'), vis.copy())}"
                 elif cur_w.obj_type == 'output':
                     # выход
-                    return rec(get_con("in"))
+                    return rec(get_con("in"), vis.copy())
                 else:
                     # бинарный опреатор - возвращаем сам оператор и операнды
-                    return f"({rec(get_con('in1'))} {cur_w.properties['operator']} {rec(get_con('in2'))})"
+                    return f"({rec(get_con('in1'), vis.copy())} {cur_w.properties['operator']} {rec(get_con('in2'), vis.copy())})"
             elif type(cur_w) == Connector:
                 if cur_w.usage == "out":
                     # для выходного коннектора просто запускаем обход по родителю
-                    return rec(cur_w.parent)
+                    return rec(cur_w.parent, vis.copy())
                 elif cur_w.usage[:2] == "in":
                     # входной коннектор - для него смотрим подключенные
-                    connected = grouped[cur_w.get_grid_pos()]
+                    connected = grouped[cur_w.get_grid_pos()].copy()
                     if len(connected) == 1:
                         raise SchemeCompilationError("Имеется неподключенный вход на элементе")
                     elif (len(connected)) > 2:
@@ -660,9 +867,9 @@ class MySchemeCanvas:
                                     f"Подключенные: {connected}")
 
                         connected.remove(cur_w)
-                        return rec(connected[0])
+                        return rec(connected[0], vis.copy())
                 elif cur_w.usage == "bypass":
-                    connected = grouped[cur_w.get_grid_pos()]
+                    connected = grouped[cur_w.get_grid_pos()].copy()
                     debug_print(f"Подключенные: {connected}")
                     # if len(connected) == 1:
                     #     # неподключенный коннектор
@@ -670,28 +877,24 @@ class MySchemeCanvas:
                     if len(connected) <= 2:
                         # просто линейный коннектор
                         for itsc_con in connected:
-                            if not itsc_con.parent.cmp_vis:  # ищем непосещенную линию
-                                itsc_con.cmp_vis = True
-                                return rec(itsc_con.parent)  # обрабатываем линию
+                            if itsc_con.parent not in vis:  # ищем непосещенную линию
+                                # itsc_con.cmp_vis = True
+                                vis.add(itsc_con)
+                                return rec(itsc_con.parent, vis.copy())  # обрабатываем линию
                     else:
                         # пересечение
-                        cur_w.cmp_vis = 0
-                        return rec(get_source(cur_w))
+                        # cur_w.cmp_vis = 0
+                        return rec(get_source(cur_w), vis.copy())
 
             elif type(cur_w) == Connection:
                 # у линии может быть всего 2 конектора, поэтому просто проверяем каждый из них
                 debug_print(f"Обработка линии")
-                if not cur_w.connector1.cmp_vis:
-                    return rec(cur_w.connector1)
-                if not cur_w.connector2.cmp_vis:
-                    return rec(cur_w.connector2)
+                if cur_w.connector1 not in vis:
+                    return rec(cur_w.connector1, vis.copy())
+                if cur_w.connector2 not in vis:
+                    return rec(cur_w.connector2, vis.copy())
 
         debug_print("-= Начало компиляции =-")
-
-        # сброс посещений
-        for con in self.connectors:
-            con.cmp_vis = 0
-            con.parent.cmp_vis = 0
 
         self.render_widgets()
         grouped = self.compile_connectors()
@@ -703,10 +906,18 @@ class MySchemeCanvas:
                 output_node = widget
                 break
         debug_print("Найден выходной коннектор")
-        print(rec(output_node))
 
+        try:
+            result = rec(output_node, None)
+            return LogicFunction(result)
+        except InputException as error:
+            dialog = WarnDialog("Ошибка компиляции", error.args[0] + f"\nРаспознанное выражение: {result}")
+            dialog.exec_()
 
     def set_zoom(self, zoom: int):
+        """! Устанавливает приближение на холсте
+        @param zoom: множитель приближения
+        """
         w, h = self.parent.size().width(), self.parent.size().height()
         if zoom > self.zoom:
             self.pos = (int(self.pos[0] + 0.5 * (w - w * (self.zoom / zoom))),

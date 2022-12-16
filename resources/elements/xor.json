@@ -1,10 +1,10 @@
 {
-  "image": "resources/and.png",
+  "image": "resources/xor.png",
   "size": [5, 5],
   "connectors": {
     "in1": [0, 1],
     "in2": [0, 3],
     "out": [4, 2]
   },
-  "operator": "*"
+  "operator": "^"
 }

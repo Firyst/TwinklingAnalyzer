@@ -3,8 +3,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QTableWidgetItem
 from itertools import product
-from LogicFunction import LogicFunction, InputException
+from LogicFunction import LogicFunction, InputException, generate_function_from_table
 from string import ascii_letters
+
 VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
 
 
@@ -29,10 +30,33 @@ class InputDialog(QDialog):
         try:
             test_func = LogicFunction(self.inputFunction.text())
             self.output = test_func
+            self.close()
         except InputException as error:
             self.output = None
             dialog = WarnDialog("Ошибка", error.args[0])
             dialog.exec_()
+
+    def close_dialog(self):
+        self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
+        self.close()
+
+
+class ConfirmDialog(QDialog):
+    output = None
+
+    def __init__(self, title, text):
+        super().__init__()
+        uic.loadUi('resources/ConfirmDialog.ui', self)
+        self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
+
+        self.setWindowTitle(title)
+        self.label.setText(text)
+        self.buttonCancel.clicked.connect(self.close_dialog)
+        self.buttonConfirm.clicked.connect(self.confirm_input)
+
+    def confirm_input(self):
+        self.output = True
+        self.close()
 
     def close_dialog(self):
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
@@ -60,7 +84,7 @@ class TinyInputDialog(QDialog):
         if any(map(lambda i: self.inputLine.text()[i] not in VALID_SYMBOLS, range(len(self.inputLine.text())))):
             # есть некорректные символы!
             dialog = WarnDialog("Ошибка", "Некорректные символы. Можно использовать только символы "
-                                              "русского и латинского алфавита.")
+                                          "русского и латинского алфавита.")
             dialog.exec_()
             return
         self.output = self.inputLine.text()
@@ -132,7 +156,8 @@ class TableDialog(QDialog):
     def confirm_input(self):
         var_count = self.varSelector.currentIndex() + 2  # количество переменных
 
-        self.output = []  # сбрасываем текущий вывод
+        self.output = None  # сбрасываем текущий вывод
+        table = []
         values_table = tuple(product((0, 1), repeat=var_count))  # входные значения
         for value_i in range(2 ** var_count):
             try:
@@ -142,11 +167,14 @@ class TableDialog(QDialog):
                 self.interrupt_input("Пожалуйста, введите все значения.")
                 return
             if str(current_value) in '01':
-                self.output.append((values_table[value_i], int(current_value)))
+                table.append((values_table[value_i], int(current_value)))
             else:
                 self.interrupt_input("Пожалуйста, введите корректные значения.\nДопустимы только 0 и 1.")
                 return
-        print(self.output)
+
+        # получаем функцию в совершенной форме
+        self.output = generate_function_from_table(table, self.methodSelector.currentIndex())
+        self.close()
 
     def interrupt_input(self, error_text):
         self.output = []
@@ -160,7 +188,7 @@ class TableDialog(QDialog):
 
 class LogicSelectDialog(QDialog):
     output = None
-    output_data = {0: 'not', 1: 'and', 2: 'or', 3: 'input'}
+    output_data = {0: 'not', 1: 'and', 2: 'or', 3: 'xor', 4: 'input'}
 
     def __init__(self):
         super().__init__()
