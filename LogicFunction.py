@@ -254,7 +254,7 @@ class LogicFunction:
         mas_of_zero = dict()
         for line in mas_zero:
             line_list = list(line)
-            count_0 = line_list.count(1)
+            count_0 = line_list.count(0)
             if count_0 in mas_of_zero:
                 mas_of_zero[count_0].append(line)
             else:
@@ -387,7 +387,8 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
         return LogicFunction('+'.join(snf))
     return LogicFunction('*'.join(snf))
 
-# tf = LogicFunction("not AB")
-# print(tf.get_current_expression())
-# print(tf.generate_boolean_table())
-# print(tf.simplify_sdnf().get_current_expression())
+
+#tf = LogicFunction("(!(!A | B) * (C & !D)) + ((!A | B) * !(C & !D))")
+#simplified = (tf.simplify_sdnf())
+
+#print(tf.generate_boolean_table() == simplified.generate_boolean_table())
