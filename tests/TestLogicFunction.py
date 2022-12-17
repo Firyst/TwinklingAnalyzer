@@ -69,3 +69,30 @@ def test_generate_boolean_table_1():
 def test_generate_boolean_table_2():
     f = LogicFunction('A+B*С')
     assert f.generate_boolean_table() == [((0, 0, 0), 0), ((0, 0, 1), 0), ((0, 1, 0), 0), ((0, 1, 1), 1), ((1, 0, 0), 1), ((1, 0, 1), 1), ((1, 1, 0), 1), ((1, 1, 1), 1)]
+
+
+def test_simplyfy_sdnf_1():
+    f = LogicFunction('A*B*C')
+    assert f.generate_boolean_table() == f.simplify_sdnf().generate_boolean_table()
+
+def test_simplyfy_sdnf_2():
+    f = LogicFunction('!A*A*!B*B')
+    with pytest.raises(InputException):
+        f.simplify_sdnf()
+
+def test_simplyfy_sdnf_3():
+    f = LogicFunction('!A^B+!C^D*F')
+    assert f.generate_boolean_table() == f.simplify_sdnf().generate_boolean_table()
+
+def test_simplyfy_sknf_1():
+    f = LogicFunction('A+B+C')
+    assert f.generate_boolean_table() == f.simplify_sknf().generate_boolean_table()
+
+def test_simplyfy_sknf_2():
+    f = LogicFunction('!A+A+!B+B')
+    with pytest.raises(InputException):
+        f.simplify_sknf()
+
+def test_simplyfy_sknf_3():
+    f = LogicFunction('!A^B+!C^D*F')
+    assert f.generate_boolean_table() == f.simplify_sknf().generate_boolean_table()
