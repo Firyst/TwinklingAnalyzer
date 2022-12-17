@@ -87,6 +87,11 @@ class TinyInputDialog(QDialog):
                                           "русского и латинского алфавита.")
             dialog.exec_()
             return
+        if any(map(lambda i: i in self.inputLine.text().lower(), ("not", "or", "xor", "and", "не", "или", "и"))):
+            # плохое название (схоже с оператором)
+            dialog = WarnDialog("Ошибка", "Название переменной схоже с названием оператора.")
+            dialog.exec_()
+            return
         self.output = self.inputLine.text()
         self.close()
 
@@ -113,7 +118,7 @@ class WarnDialog(QDialog):
 
 
 class TableDialog(QDialog):
-    output = []
+    output = None
 
     def __init__(self):
         super().__init__()
@@ -177,7 +182,7 @@ class TableDialog(QDialog):
         self.close()
 
     def interrupt_input(self, error_text):
-        self.output = []
+        self.output = None
         dialog = WarnDialog("Ошибка", error_text)
         dialog.exec_()
 
