@@ -7,6 +7,7 @@ from PyQt5.QtGui import QPixmap, QCursor, QIcon
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QPushButton, QMenu, QFileDialog
 from Dialogs import *
 from LogicFunction import *
+from ImageGenerator import graph
 import json
 import copy
 
@@ -71,13 +72,63 @@ class ProgramWindow(QMainWindow):
         self.action_scheme_save.triggered.connect(self.save_scheme)  # сохранение схемы
         self.action_scheme_quit.triggered.connect(self.close_scheme_editor)  # закрытие схемы
 
-        self.button_convert.clicked.connect(self.run_conversion)
-        self.conversion_save.clicked.connect(self.save_conversion)
-        self.conversion_clear.clicked.connect(self.clear_conversion_log)
+        self.button_convert.clicked.connect(self.run_conversion)  # запуск преобразования
+        self.conversion_save.clicked.connect(self.save_conversion)  # сохранение преобразования
+        self.conversion_clear.clicked.connect(self.clear_conversion_log)  # очистка преобразования
+
+        self.button_analyze_generate.clicked.connect(self.draw_graph)
+        self.button_analyze_save.clicked.connect(self.save_graph)
+
 
         self.action_about.triggered.connect(self.view_about_page)  # о программе
 
         self.setup_editor()
+
+    # АНАЛИЗАТОР
+
+    def save_graph(self):
+        """! Сохранить график в файл PNG.
+        """
+        # проверка, есть ли функция
+        if self.function is None:
+            dialog = WarnDialog("Ошибка", "Функция не задана")
+            dialog.exec_()
+            return
+
+        # создать диалоговое окно
+        dialog = QFileDialog(self)
+        dialog.setNameFilter("PNG (*.png)")
+        dialog.setAcceptMode(QFileDialog.AcceptSave)
+        if dialog.exec_():
+            filename = dialog.selectedFiles()[0]
+            # добавляем расширение, если оно не было указано
+            if '.png' not in filename:
+                filename += '.png'
+
+            self.draw_graph(filename)
+
+    def draw_graph(self, override_output=''):
+        """! Отрисовать график-вейформу функции
+        @param override_output: куда сохранить файл. Если не указан, то файл сохранится как temp_graph.png
+        """
+        if self.function is None:
+            dialog = WarnDialog("Ошибка", "Функция не задана")
+            dialog.exec_()
+            return
+
+        # цвета в соотвествии с выбором в выпадающих списках
+        bg_color = ['white', 'black'][self.analayze_color_selector_1.currentIndex()]
+        text_color = ['black', 'white'][self.analayze_color_selector_1.currentIndex()]
+        graph_color = ['blue', 'red', 'green', 'violet'][self.analayze_color_selector_2.currentIndex()]
+
+        # проверка на сохранение
+        if not override_output:
+            override_output = "resources/temp_graph.png"
+        graph(self.function, text_color, bg_color, graph_color, override_output)
+
+        pixmap = QPixmap(override_output)
+        pixmap = pixmap.scaledToHeight(self.graphScrollArea.height() - 24)  # обрезаем по высоте окошка
+        self.analyze_graph.setPixmap(pixmap)
 
     # ПРЕОБРАЗОВАНИЯ
 
@@ -306,7 +357,6 @@ class DraggableWidget(QLabel):
         @param object_type: тип картинки. Возможные значения: and, or, not, inp, out, xor, debug
         """
         super().__init__(parent)
-        print(object_type)
         self.canvas = canvas
         self.connectors: List[Connector] = []
         self.properties = load_json(os.path.join('resources', 'elements', f'{object_type}.json'))
@@ -410,13 +460,13 @@ class DraggableWidget(QLabel):
             connector.render_size()
 
     def get_grid_pos(self) -> Tuple[int, int]:
-        """! Получить координаты объекта на сетке.
+        """! Получить координаты объекта на сетке. Метод нужен для унификации с другими объектами.
         @return: Tuple(int, int) - позиция на сетке.
         """
         return self.grid_pos
 
     def get_size(self) -> Tuple[int, int]:
-        """! Возвращает текущий размер объекта кортежем
+        """! Получить текущий размер объекта кортежем
         @return:Tuple(int, int) - отрисованный размер объекта.
         """
         return (self.geometry().width(), self.geometry().height())

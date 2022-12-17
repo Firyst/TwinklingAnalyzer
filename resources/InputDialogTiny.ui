@@ -37,7 +37,7 @@
       <string/>
      </property>
      <property name="maxLength">
-      <number>6</number>
+      <number>4</number>
      </property>
      <property name="placeholderText">
       <string>Начните ввод здесь...</string>

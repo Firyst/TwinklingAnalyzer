@@ -53,6 +53,8 @@ class LogicFunction:
         for variable in self.get_variables():
             if variable in digits:
                 raise InputException("Переменные нельзя называть цифрами")
+            if len(variable) > 4:
+                raise InputException("Названия переменных должны быть короче 5 символов.")
 
         # проверяем корректность скобочек
         # ошибка вызовется внутри функции
