@@ -1,25 +1,71 @@
+import pytest
+from LogicFunction import *
 
-import unittest
-from LogicFunction import LogicFunction
+def test_init_1():
+    with pytest.raises(InputException):
+        LogicFunction('')
 
+def test_init_2():
+    with pytest.raises(InputException):
+        LogicFunction('a')
 
-class TestLogicFunction(unittest.TestCase):
-    def setUp(self):
-        self.func = LogicFunction('a + b + c')
+def test_init_3():
+    with pytest.raises(InputException):
+        LogicFunction('(+-!@#$%^&*=:;)')
 
-    def test_vars(self):
-        self.assertEqual(self.func.get_variables(), ['a', 'b', 'c'])
+def test_init_4():
+    with pytest.raises(InputException):
+        LogicFunction('fkjjsdflnsafb')
 
-    def test_result(self):
-        self.assertEqual(self.func.get_result((0, 1, 0)), 1)
+def test_init_5():
+    with pytest.raises(InputException):
+        LogicFunction('1234567890')
 
-    def test_table(self):
-        self.assertEqual(self.func.generate_boolean_table(),
-                         [((0, 0, 0), 0), ((0, 0, 1), 1), ((0, 1, 0), 1), ((0, 1, 1), 1), ((1, 0, 0), 1),
-                          ((1, 0, 1), 1), ((1, 1, 0), 1), ((1, 1, 1), 1)])
+def test_init_6():
+    with pytest.raises(InputException):
+        LogicFunction('())))')
 
+def test_init_7():
+    f = LogicFunction("A      +     B")
+    assert f.exp == 'A or B'
 
+def test_init_8():
+    f = LogicFunction("A*B+B")
+    assert f.exp == 'A and B or B'
 
-# Executing the tests in the above test case class
-if __name__ == "__main__":
-    unittest.main()
+def test_init_9():
+    f = LogicFunction("!AB+B^C")
+    assert f.exp == ' not AB or B^C'
+
+def test_init_10():
+    f = LogicFunction("A+B^C*D")
+    assert f.exp == 'A or B^C and D'
+
+def test_get_variables_1():
+    f = LogicFunction("A+B^C*D")
+    assert f.get_variables() == ['A', 'B', 'C', 'D']
+
+def test_get_variables_2():
+    f = LogicFunction("A^B*C*A+C")
+    assert f.get_variables() == ['A', 'B', 'C']
+
+def test_get_result_1():
+    f = LogicFunction("A+B+C")
+    assert f.get_result((0, 0, 0)) == 0
+
+def test_get_result_2():
+    f = LogicFunction("A+B")
+    with pytest.raises(IndexError):
+        f.get_result((0, ))
+
+def test_get_result_3():
+    f = LogicFunction("A+B*C")
+    assert f.get_result((0, 1, 1)) == 1
+
+def test_generate_boolean_table_1():
+    f = LogicFunction('A^B')
+    assert f.generate_boolean_table() == [((0, 0), 0), ((0, 1), 1), ((1, 0), 1), ((1, 1), 0)]
+
+def test_generate_boolean_table_2():
+    f = LogicFunction('A+B*С')
+    assert f.generate_boolean_table() == [((0, 0, 0), 0), ((0, 0, 1), 0), ((0, 1, 0), 0), ((0, 1, 1), 1), ((1, 0, 0), 1), ((1, 0, 1), 1), ((1, 1, 0), 1), ((1, 1, 1), 1)]

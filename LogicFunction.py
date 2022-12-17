@@ -11,16 +11,14 @@ REPLACES = {' and ': ['&&', '*', ' и ', ' AND ', ' И ', '&', '⋀'],
 VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" + "()^ " + digits
 
 
-# print(VALID_SYMBOLS)
-
-
 class InputException(Exception):
+    """! Кастомное исключение
+    """
     pass
 
 
 class LogicFunction:
-    """
-    Класс, описывающий логическое выражение.
+    """! Класс, описывающий логическое выражение
     """
 
     def __init__(self, expression: str):
@@ -39,7 +37,7 @@ class LogicFunction:
         while '  ' in self.exp:
             self.exp = self.exp.replace('  ', ' ')
 
-        self.exp = self.exp.replace("( not", "(not")  # чтобы выгядило посимпатичнее
+        self.exp = self.exp.replace("( not", "(not")  # чтобы выгядело аккуратнее
 
         # проверяем на корректность символов
         for symb in self.exp:
@@ -60,16 +58,9 @@ class LogicFunction:
         # ошибка вызовется внутри функции
         test_value = self.get_result((0,) * len(variables))
 
-    def get_current_expression(self) -> str:
-        """! Получить текущую запись логической функции.
-        @return строка, отображающая логическую функцию с python-совместимыми операторами
-        """
-        return self.exp
-
     def get_variables(self):
         """! Получить названия всех переменных в функции
         @return отсортированный list названий переменных
-
         """
         variables_left = self.exp
         for replacing_symbol in punctuation:
@@ -90,7 +81,6 @@ class LogicFunction:
         eval_string = ''
         for i, var in enumerate(self.get_variables()):
             eval_string += f"{var} = {values[i]}\n"
-            # eval_string.replace(var, str(values[i]))  # has a bad case that should be fixed
         eval_string += 'res = ' + self.exp
         res = {}
         try:
@@ -110,19 +100,9 @@ class LogicFunction:
             result.append((func_case, case_result))
         return result
 
-    def beautiful_boolean_table(self):
-        """! Генерирует визуализацию таблицы истинности для print.
-        @return отформатированная строка
-        """
-        table = self.generate_boolean_table()
-        result = '\t'.join(self.get_variables() + ['func'])
-        for case in table:
-            result += '\n' + '\t'.join(map(str, case[0])) + f"\t{str(case[1])}"
-        return result
-
     def simplify_sdnf(self):
         """Упрощение методом Квайна СДНФ
-        Returns: объект LogicFunction с упрощенной функцией
+        @return объект LogicFunction с упрощенной функцией
         """
         mas = self.generate_boolean_table()
         cur_names = self.get_variables()
@@ -133,7 +113,7 @@ class LogicFunction:
             if mas[i][1] == 1:
                 mas_one.append(mas[i][0])
         if len(mas_one) == 0:
-            return 0
+            raise InputException("Функция всегда является константой 0")
         # создаем cписок, где распределяем по количеству единиц
         mas_of_one = dict()
         for line in mas_one:
@@ -238,7 +218,7 @@ class LogicFunction:
 
     def simplify_sknf(self):
         """Упрощение методом Квайна СКНФ
-        Returns: объект LogicFunction с упрощенной функцией
+        @return объект LogicFunction с упрощенной функцией
         """
         mas = self.generate_boolean_table()
         cur_names = self.get_variables()
@@ -249,7 +229,7 @@ class LogicFunction:
             if mas[i][1] == 0:
                 mas_zero.append(mas[i][0])
         if len(mas_zero) == 0:
-            return 1
+            raise InputException("Функция всегда является константой 1")
         # создаем cписок, где распределяем по количеству нулей
         mas_of_zero = dict()
         for line in mas_zero:
@@ -354,14 +334,12 @@ class LogicFunction:
 
 
 def generate_function_from_table(table: list, method=0) -> LogicFunction:
-    """Генерирует и возвращает объект LogicFunction по таблице истинности формата:
+    """! Генерирует и возвращает объект LogicFunction по таблице истинности формата:
     list: [((tuple: input_values), result)]
     Используемые названия переменных: a, b, c, d...
-    Args:
-        table: list: [((tuple: input_values), result)]
-        method: 0 - СДНФ, 1 - СКНФ
-
-    Returns: объект LogicFunction с совершенной формой
+    @param table list: [((tuple: input_values), result)]
+    @param method 0 - СДНФ, 1 - СКНФ
+    @return: объект LogicFunction с совершенной формой
 
     """
     snf = []  # список с логическими выражениями
@@ -386,9 +364,3 @@ def generate_function_from_table(table: list, method=0) -> LogicFunction:
     if method == 1:
         return LogicFunction('+'.join(snf))
     return LogicFunction('*'.join(snf))
-
-
-#tf = LogicFunction("(!(!A | B) * (C & !D)) + ((!A | B) * !(C & !D))")
-#simplified = (tf.simplify_sdnf())
-
-#print(tf.generate_boolean_table() == simplified.generate_boolean_table())
