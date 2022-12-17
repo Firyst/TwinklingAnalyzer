@@ -1,0 +1,39 @@
+{
+  "filetype": "TA-scheme-v1",
+  "objects": [
+    {
+      "type": "Element",
+      "obj_type": "output",
+      "pos": [
+        18,
+        13
+      ]
+    },
+    {
+      "type": "Element",
+      "obj_type": "and",
+      "pos": [
+        14,
+        12
+      ]
+    },
+    {
+      "type": "Element",
+      "obj_type": "input",
+      "pos": [
+        12,
+        12
+      ],
+      "name": "A"
+    },
+    {
+      "type": "Element",
+      "obj_type": "input",
+      "pos": [
+        12,
+        14
+      ],
+      "name": "B"
+    }
+  ]
+}

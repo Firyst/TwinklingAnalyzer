@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from unittest.mock import Mock
 import pytestqt
@@ -127,7 +129,7 @@ class TestConversions:
 
 
 class TestSchemeEditor:
-    # тесты редактора схем
+    # тесты редактора схем (MySchemeCanvas+ProgramWindow)
     def test_scheme_open(self, qtbot):
         win = ProgramWindow()
         win.show()
@@ -154,7 +156,6 @@ class TestSchemeEditor:
 
         assert test_widget in win.canvas.widgets and len(win.canvas.connectors) == 6
 
-
     def test_clear_canvas(self, qtbot):
         win = ProgramWindow()
         qtbot.add_widget(win)
@@ -164,3 +165,45 @@ class TestSchemeEditor:
 
         assert len(win.canvas.widgets) == 0
 
+    def test_scheme_load_1(self, qtbot):
+        win = ProgramWindow()
+
+        with pytest.raises(KeyError):
+            win.canvas.load_scheme(load_json("tests/test_scheme_invalid_1.json"))
+
+    def test_scheme_load_2(self, qtbot):
+        win = ProgramWindow()
+
+        with pytest.raises(TypeError):
+            win.canvas.load_scheme(load_json("tests/test_scheme_invalid_2.json"))
+
+    def test_scheme_load_3(self, qtbot):
+        win = ProgramWindow()
+
+        with pytest.raises(json.JSONDecodeError):
+            win.canvas.load_scheme(load_json("tests/test_scheme_invalid_3.json"))
+
+    def test_scheme_load_good(self, qtbot):
+        win = ProgramWindow()
+
+        win.canvas.load_scheme(load_json("tests/test_scheme_1.json"))
+
+        assert len(win.canvas.widgets) == 4
+
+    def test_scheme_save_1(self, qtbot):
+        win = ProgramWindow()
+        win.canvas.load_scheme(load_json("tests/test_scheme_1.json"))
+
+        assert win.canvas.save_scheme() == load_json("tests/test_scheme_1.json")
+
+    def test_scheme_compile_1(self, qtbot):
+        win = ProgramWindow()
+        win.canvas.load_scheme(load_json("tests/test_scheme_1.json"))
+
+        assert win.canvas.compile_scheme().exp == '(A and B)'
+
+    def test_scheme_complie_2(self, qtbot):
+        win = ProgramWindow()
+
+        with pytest.raises(SchemeCompilationError):
+            win.canvas.compile_scheme()
