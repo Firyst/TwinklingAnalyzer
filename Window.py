@@ -101,7 +101,7 @@ class ProgramWindow(QMainWindow):
                            ("¬", " ⋁ ", " ⋀ ", " ⊕ "),
                            ("not ", " or ", " and ", " xor "),
                            ("не ", " или ", " и ", " ^ "))
-            exp = self.function.get_current_expression()
+            exp = self.function.exp
             for r_i in range(len(converted)):
                 exp = exp.replace(converted[r_i], conversions[conv_type][r_i])
             self.conversion_log.setPlainText("F = " + exp)
@@ -165,7 +165,7 @@ class ProgramWindow(QMainWindow):
             if dialog.output:
                 # сохраняем функцию
                 self.function = func
-                self.function_text.setText("F + " + func.get_current_expression())
+                self.function_text.setText("F = " + func.exp)
                 self.close_scheme_editor()
         except SchemeCompilationError as err:
             dialog = WarnDialog("Ошибка компиляции", err.args[0])
@@ -790,7 +790,7 @@ class MySchemeCanvas:
                     # логический элемент
                     obj['type'] = 'Element'
                     obj['obj_type'] = con.parent.obj_type
-                    obj['pos'] = con.parent.get_grid_pos()
+                    obj['pos'] = list(con.parent.get_grid_pos())
                     if 'name' in con.parent.properties:
                         obj['name'] = con.parent.properties['name']
                 elif type(con.parent) == Connection:

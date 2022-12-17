@@ -1,0 +1,197 @@
+{
+  "filetype": "TA-scheme-v1",
+  "objects": [
+    {
+      "type": "Element",
+      "obj_type": "output",
+      "pos": [
+        1,
+        1
+      ]
+    },
+    {
+      "type": "Element",
+      "obj_type": "xor",
+      "pos": [
+        -5,
+        0
+      ]
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -1,
+        2
+      ],
+      "pos2": [
+        1,
+        2
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Element",
+      "obj_type": "or",
+      "pos": [
+        -15,
+        -3
+      ]
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -11,
+        1
+      ],
+      "pos2": [
+        -5,
+        1
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -11,
+        -1
+      ],
+      "pos2": [
+        -11,
+        1
+      ],
+      "orientation": 1
+    },
+    {
+      "type": "Element",
+      "obj_type": "not",
+      "pos": [
+        -21,
+        -3
+      ]
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -17,
+        -2
+      ],
+      "pos2": [
+        -15,
+        -2
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Element",
+      "obj_type": "input",
+      "pos": [
+        -25,
+        -3
+      ],
+      "name": "A"
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -23,
+        -2
+      ],
+      "pos2": [
+        -21,
+        -2
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Element",
+      "obj_type": "input",
+      "pos": [
+        -25,
+        -1
+      ],
+      "name": "B"
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -23,
+        0
+      ],
+      "pos2": [
+        -15,
+        0
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Element",
+      "obj_type": "and",
+      "pos": [
+        -15,
+        3
+      ]
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -11,
+        3
+      ],
+      "pos2": [
+        -5,
+        3
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -11,
+        3
+      ],
+      "pos2": [
+        -11,
+        5
+      ],
+      "orientation": 1
+    },
+    {
+      "type": "Element",
+      "obj_type": "input",
+      "pos": [
+        -20,
+        3
+      ],
+      "name": "C"
+    },
+    {
+      "type": "Line",
+      "pos1": [
+        -18,
+        4
+      ],
+      "pos2": [
+        -15,
+        4
+      ],
+      "orientation": 0
+    },
+    {
+      "type": "Element",
+      "obj_type": "not",
+      "pos": [
+        -19,
+        5
+      ]
+    },
+    {
+      "type": "Element",
+      "obj_type": "input",
+      "pos": [
+        -21,
+        5
+      ],
+      "name": "D"
+    }
+  ]
+}
