@@ -29,10 +29,13 @@ class LogicFunction:
 
         self.exp = expression
 
-        # замена возможных записей функции на python-интерпретируемые
-        for repl_symbol in REPLACES:
-            for possible_entry in REPLACES[repl_symbol]:
-                self.exp = self.exp.replace(possible_entry, repl_symbol)
+        try:
+            # замена возможных записей функции на python-интерпретируемые
+            for repl_symbol in REPLACES:
+                for possible_entry in REPLACES[repl_symbol]:
+                    self.exp = self.exp.replace(possible_entry, repl_symbol)
+        except AttributeError:
+            raise InputException("Задана пустая функция.")
 
         # чистим лишние пробелы
         while '  ' in self.exp:

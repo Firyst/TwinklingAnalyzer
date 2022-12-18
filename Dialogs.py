@@ -222,9 +222,13 @@ class TableDialog(QDialog):
                 self.interrupt_input("Пожалуйста, введите корректные значения.\nДопустимы только 0 и 1.")
                 return
 
-        # получаем функцию в совершенной форме
-        self.output = generate_function_from_table(table, self.methodSelector.currentIndex())
-        self.close()
+        try:
+            # получаем функцию в совершенной форме
+            self.output = generate_function_from_table(table, self.methodSelector.currentIndex())
+            self.close()
+        except InputException:
+            # функция константна
+            self.interrupt_input("Функция равна констате.")
 
     def interrupt_input(self, error_text: str):
         """! Сбрасывает вывод и создает диалоговое окно об ошибке.
