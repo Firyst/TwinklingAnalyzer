@@ -584,7 +584,7 @@ padding: 2px;
     <property name="title">
      <string>Помощь</string>
     </property>
-    <addaction name="actionDocumentation"/>
+    <addaction name="action_docs"/>
     <addaction name="action_about"/>
    </widget>
    <widget class="QMenu" name="menuScheme">
@@ -618,7 +618,7 @@ padding: 2px;
     <string>Сохранить как</string>
    </property>
   </action>
-  <action name="actionDocumentation">
+  <action name="action_docs">
    <property name="text">
     <string>Документация</string>
    </property>

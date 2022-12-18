@@ -8,6 +8,7 @@ from Dialogs import *
 from LogicFunction import *
 from ImageGenerator import graph
 import json
+import subprocess, platform
 
 
 DEBUG_MODE = 0
@@ -72,6 +73,7 @@ class ProgramWindow(QMainWindow):
 
         ###
         self.action_about.triggered.connect(self.view_about_page)  # о программе
+        self.action_docs.triggered.connect(self.open_docs)  # документация
 
         # Горячие клавиши
         self.action_scheme_open.setShortcut("Ctrl+O")
@@ -79,6 +81,8 @@ class ProgramWindow(QMainWindow):
         self.action_scheme_compile.setShortcut("Ctrl+G")
         self.action_scheme_clear.setShortcut("Ctrl+1")
         self.action_scheme_quit.setShortcut("Ctrl+Q")
+
+        self.action_docs.setShortcut("F1")
 
         self.setup_editor()
 
@@ -208,6 +212,19 @@ class ProgramWindow(QMainWindow):
                                            "Баулин Филипп\nСеребрякова Ольга\nМИЭМ НИУ ВШЭ, 2022\n\n"
                                            "https://github.com/Firyst/TwinklingAnalyzer")
         dialog.exec_()
+
+    def open_docs(self):
+        """! Открывает документацию в браузере.
+        """
+        # код заимствован с https://stackoverflow.com/questions/434597/open-document-with-default-os-application-in-python-both-in-windows-and-mac-os
+        filepath = os.path.abspath('docs/html/index.html')
+        if platform.system() == 'Darwin':  # macOS
+            subprocess.call(('open', filepath))
+        elif platform.system() == 'Windows':  # Windows
+            os.startfile(filepath)
+        else:  # linux variants
+            subprocess.call(('xdg-open', filepath))
+        # конец заимствования
 
     def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
         """! Событие закрытия окна программы. Используется для очистки кэша.
