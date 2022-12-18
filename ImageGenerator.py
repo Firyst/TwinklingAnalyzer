@@ -9,7 +9,7 @@ def graph(func: LogicFunction, text_color, bg_color, graph_color, output):
     @param func: сама логическая функция (объект LogicFunction)
     @param text_color: цвет текста
     @param bg_color: цвет фона
-    @param graph_color: цвет самого значения график
+    @param graph_color: цвет самого значения графика
     @param output: файл, в которых сохранять график
     """
     f_vars = func.get_variables()

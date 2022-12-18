@@ -13,7 +13,7 @@ VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХ�
 
 
 class InputException(Exception):
-    """! Кастомное исключение
+    """! Кастомное исключение для обработки некорректного ввода
     """
     pass
 
@@ -104,7 +104,7 @@ class LogicFunction:
         return result
 
     def simplify_sdnf(self):
-        """Упрощение методом Квайна СДНФ
+        """! Упрощение методом Квайна СДНФ
         @return объект LogicFunction с упрощенной функцией
         """
         array = self.generate_boolean_table()
@@ -220,7 +220,7 @@ class LogicFunction:
         return LogicFunction('+'.join(sdnf))
 
     def simplify_sknf(self):
-        """Упрощение методом Квайна СКНФ
+        """! Упрощение методом Квайна СКНФ
         @return объект LogicFunction с упрощенной функцией
         """
         array = self.generate_boolean_table()

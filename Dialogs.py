@@ -133,7 +133,7 @@ class TinyInputDialog(QDialog):
 
 
 class WarnDialog(QDialog):
-    """! Предупреждающее/информацинное диалоговое окно.
+    """! Предупреждающее/информационное диалоговое окно.
     """
     def __init__(self, title: str, text: str):
         """! Инициализация окна

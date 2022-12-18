@@ -372,11 +372,15 @@ class ProgramWindow(QMainWindow):
 
 
 class DraggableWidget(QLabel):
-    """! Перетаскиваем виджет. Используется как логический элемент
+    """! Перетаскиваемый виджет. Используется как логический элемент
     """
     def __init__(self, parent: QWidget, object_type: str, canvas, override_name=''):
         """! Создать виджет объекта схемы
+        @param parent: родительских виджет.
         @param object_type: тип картинки. Возможные значения: and, or, not, inp, out, xor, debug
+        @param canvas: холст, на котором располагается виджет
+        @param override_name: название входной переменной. Используется только для типа input. Необязательный аргумент
+        -- по умолчанию будет вызываться диалоговое окно.
         """
         super().__init__(parent)
         self.canvas = canvas
@@ -522,7 +526,7 @@ class DraggableWidget(QLabel):
             self.render_object()
 
     def __repr__(self) -> str:
-        """Запись данных объекта в строчку
+        """! Запись данных объекта в строчку
         @return: строка lObject(data...)
         """
         return f"lObject({self.get_grid_pos()}, {self.obj_type})"
@@ -619,7 +623,7 @@ class Connector(QLabel):
             self.test_line = None
 
     def __repr__(self):
-        """Запись данных объекта в строчку
+        """! Запись данных объекта в строчку
         @return: строка Connector(data...)
         """
         return f"Connector({self.get_grid_pos()}, {self.usage})"
@@ -739,7 +743,7 @@ class Connection(QLabel):
         self.line.pixmap().scaled(self.line.geometry().width(), self.line.geometry().height(), Qt.IgnoreAspectRatio)
 
     def __repr__(self):
-        """Запись данных объекта в строчку
+        """! Запись данных объекта в строчку
         @return: строка Line(data...)
         """
         return f"Line{self.pos}"
@@ -898,14 +902,14 @@ class MySchemeCanvas:
                 self.new_line(Connection(self, tuple(obj['pos1']), tuple(obj['pos2']), obj['orientation']))
 
     def new_widget(self, widget: DraggableWidget):
-        """ ! Добавить виджет на холст
+        """! Добавить виджет на холст
         @param widget: Виджет класса DraggableWidget
         """
         self.widgets.append(widget)
         return widget
 
     def new_line(self, widget: Connection):
-        """ ! Добавить виджет на холст
+        """! Добавить виджет на холст
         @param widget: Виджет класса Connection
         """
         self.lines.append(widget)
@@ -920,7 +924,7 @@ class MySchemeCanvas:
         for line in self.lines:
             line.render_line()
 
-    def compile_connectors(self):
+    def compile_connectors(self) -> dict:
         """! Провести расчет всех соединений (коннектор) на холсте
         @return сгрупированные по позиции коннекторы
         """
@@ -1109,7 +1113,7 @@ class MySchemeCanvas:
         self.render_widgets()
 
     def move_field(self, mx: int, my: int):
-        """ ! Подвинуть "камеру" (левый верхний угол) на поле
+        """! Подвинуть "камеру" (левый верхний угол) на поле
         @param mx: смещение по X
         @param my: смещение по Y
         """
@@ -1136,7 +1140,7 @@ class MySchemeCanvas:
         self.move_field(scr_x // -24, scr_y // -24)
 
     def mouse_press(self, ev: QtGui.QMouseEvent) -> None:
-        """Нажатие скм
+        """! Нажатие скм
         @param ev: событие от pyqt
         """
         if ev.button() == Qt.MidButton:
@@ -1145,14 +1149,14 @@ class MySchemeCanvas:
             QApplication.setOverrideCursor(Qt.SizeAllCursor)
 
     def mouse_release(self, ev: QtGui.QMouseEvent) -> None:
-        """Отпуск скм
+        """! Отпуск скм
         @param ev: событие от pyqt
         """
         self.dragging = 0
         QApplication.restoreOverrideCursor()
 
     def mouse_move(self, ev: QtGui.QMouseEvent) -> None:
-        """Движение холста при зажатии СКМ
+        """! Движение холста при зажатии СКМ
         @param ev: событие от pyqt
         """
         if self.dragging:
