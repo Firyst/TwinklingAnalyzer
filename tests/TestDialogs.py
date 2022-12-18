@@ -1,7 +1,7 @@
-import pytest
+# -*- coding: utf-8 -*-
+
 import pytestqt
 import os
-from LogicFunction import *
 from Dialogs import *
 
 
@@ -133,6 +133,15 @@ class TestTinyInputDialog:
         assert dialog.output is None
 
     def test_6(self, qtbot):
+        # manual test - starting with number
+        dialog = TinyInputDialog()
+        dialog.show()
+        qtbot.add_widget(dialog)
+        dialog.inputLine.setText("00x")
+        qtbot.mouseClick(dialog.buttonConfirm, Qt.LeftButton)
+        assert dialog.output is None
+
+    def test_7(self, qtbot):
         # manual test - good
         dialog = TinyInputDialog()
         dialog.show()

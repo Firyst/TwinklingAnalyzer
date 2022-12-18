@@ -97,7 +97,7 @@ padding: 2px;
            <enum>QTabWidget::South</enum>
           </property>
           <property name="currentIndex">
-           <number>2</number>
+           <number>0</number>
           </property>
           <widget class="QWidget" name="createTab">
            <attribute name="title">
@@ -272,12 +272,12 @@ padding: 2px;
                 </item>
                 <item>
                  <property name="text">
-                  <string>Упрощенная МКНФ</string>
+                  <string>Конъюктивное упрощение</string>
                  </property>
                 </item>
                 <item>
                  <property name="text">
-                  <string>Упрощенная МДНФ</string>
+                  <string>Дизъюнктивное упрощение</string>
                  </property>
                 </item>
                </widget>
@@ -546,7 +546,7 @@ padding: 2px;
                    </font>
                   </property>
                   <property name="text">
-                   <string>   Нажмите &quot;Построить&quot; для отрисовки графиков</string>
+                   <string>   Нажмите &quot;Предпросмотр&quot; для отрисовки графиков</string>
                   </property>
                  </widget>
                 </item>
@@ -585,7 +585,6 @@ padding: 2px;
      <string>Помощь</string>
     </property>
     <addaction name="actionDocumentation"/>
-    <addaction name="actionSource_code"/>
     <addaction name="action_about"/>
    </widget>
    <widget class="QMenu" name="menuScheme">

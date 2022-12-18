@@ -1,20 +1,26 @@
+# -*- coding: utf-8 -*-
+
 from PyQt5 import uic, QtCore, QtGui
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QTableWidgetItem
 from itertools import product
 from LogicFunction import LogicFunction, InputException, generate_function_from_table
-from string import ascii_letters
+from string import ascii_letters, digits
 
-VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя"
+VALID_SYMBOLS = ascii_letters + "АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя" + digits
 
 
 class InputDialog(QDialog):
+    """! Диалоговое окно для ввода логической функции.
+    """
     output = None
 
     def __init__(self):
+        """! Инициализация окна
+        """
         super().__init__()
-        uic.loadUi('resources/InputDialog.ui', self)
+        uic.loadUi('resources/InputDialog.ui', self)  # загрузка UI файла
         self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
 
         self.setWindowTitle("Ввод функции")
@@ -22,6 +28,8 @@ class InputDialog(QDialog):
         self.buttonConfirm.clicked.connect(self.confirm_input)
 
     def confirm_input(self):
+        """! Подтверждение ввода. Вызывается при нажатии на соответствующую кнопку.
+        """
         if not self.inputFunction.text():
             self.output = None
             dialog = WarnDialog("Ошибка", "Введите функцию в поле.")
@@ -37,16 +45,24 @@ class InputDialog(QDialog):
             dialog.exec_()
 
     def close_dialog(self):
+        """! Закрытие диалогового окна и сброс вывода.
+        """
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
         self.close()
 
 
 class ConfirmDialog(QDialog):
+    """! Диаолговое окно подтверждения. Имеет две опции - да или нет.
+    """
     output = None
 
-    def __init__(self, title, text):
+    def __init__(self, title: str, text: str):
+        """! Инициализация окна
+        @param title: название окна
+        @param text: текст сообщения
+        """
         super().__init__()
-        uic.loadUi('resources/ConfirmDialog.ui', self)
+        uic.loadUi('resources/ConfirmDialog.ui', self)  # загрузка UI файла
         self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
 
         self.setWindowTitle(title)
@@ -55,20 +71,26 @@ class ConfirmDialog(QDialog):
         self.buttonConfirm.clicked.connect(self.confirm_input)
 
     def confirm_input(self):
+        """! Подтверждение ввода. При вызове сохраняет положительный результат закрывает окно."""
         self.output = True
         self.close()
 
     def close_dialog(self):
+        """! Закрытие диалогового окна и сброс вывода.
+        """
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
         self.close()
 
 
 class TinyInputDialog(QDialog):
+    """! Маленькое окошко для ввода названия переменной."""
     output = None
 
     def __init__(self):
+        """! Инициализация окна.
+        """
         super().__init__()
-        uic.loadUi('resources/InputDialogTiny.ui', self)
+        uic.loadUi('resources/InputDialogTiny.ui', self)  # загрузка UI файла
         self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
 
         self.setWindowTitle("Ввод переменной")
@@ -76,7 +98,10 @@ class TinyInputDialog(QDialog):
         self.buttonConfirm.clicked.connect(self.confirm_input)
 
     def confirm_input(self):
+        """! Подтверждение ввода. Тут же обрабатывает его корректоность.
+        """
         if not self.inputLine.text():
+            # пусто
             self.output = None
             dialog = WarnDialog("Ошибка", "Введите название")
             dialog.exec_()
@@ -84,7 +109,7 @@ class TinyInputDialog(QDialog):
         if any(map(lambda i: self.inputLine.text()[i] not in VALID_SYMBOLS, range(len(self.inputLine.text())))):
             # есть некорректные символы!
             dialog = WarnDialog("Ошибка", "Некорректные символы. Можно использовать только символы "
-                                          "русского и латинского алфавита.")
+                                          "русского и латинского алфавита. а также цифры 0-9.")
             dialog.exec_()
             return
         if any(map(lambda i: i in self.inputLine.text().lower(), ("not", "or", "xor", "and", "не", "или", "и"))):
@@ -92,35 +117,51 @@ class TinyInputDialog(QDialog):
             dialog = WarnDialog("Ошибка", "Название переменной схоже с названием оператора.")
             dialog.exec_()
             return
+        if self.inputLine.text()[0] in digits:
+            # начинается с цифры
+            dialog = WarnDialog("Ошибка", "Название переменной начинается с цифры.")
+            dialog.exec_()
+            return
         self.output = self.inputLine.text()
         self.close()
 
     def close_dialog(self):
+        """! Закрытие диалогового окна и сброс вывода.
+        """
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
         self.close()
 
 
 class WarnDialog(QDialog):
-    def __init__(self, title, text):
+    """! Предупреждающее/информацинное диалоговое окно.
+    """
+    def __init__(self, title: str, text: str):
+        """! Инициализация окна
+        @param title: название окна
+        @param text: текст сообщения
+        """
         super().__init__()
-        uic.loadUi('resources/WarningDialog.ui', self)
+        uic.loadUi('resources/WarningDialog.ui', self)  # загрузка UI файла
         self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
 
         self.setWindowTitle(title)
         self.mainLabel.setText(text)
         self.buttonConfirm.clicked.connect(self.close_dialog)
 
-    def confirm_input(self):
-        pass
-
     def close_dialog(self):
+        """! Закрытие диалогового окна. Вызывается при нажатии на кнопку.
+        """
         self.close()
 
 
 class TableDialog(QDialog):
+    """! Диалоговое окно с вводом таблицы истинности.
+    """
     output = None
 
     def __init__(self):
+        """! Инициализация окна
+        """
         super().__init__()
         uic.loadUi('resources/TableDialog.ui', self)
         self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
@@ -133,6 +174,8 @@ class TableDialog(QDialog):
         self.draw_table()
 
     def draw_table(self):
+        """! Отрисовка таблицы. Автоматически считывает значения из выпадающего списка.
+        """
         # сначала очищаем таблицу
         while self.tableWidget.rowCount():
             self.tableWidget.removeRow(0)
@@ -159,6 +202,8 @@ class TableDialog(QDialog):
         self.tableWidget.resizeRowsToContents()
 
     def confirm_input(self):
+        """! Подтверждение введенных данных. Проверяет их корректность.
+        """
         var_count = self.varSelector.currentIndex() + 2  # количество переменных
 
         self.output = None  # сбрасываем текущий вывод
@@ -181,21 +226,30 @@ class TableDialog(QDialog):
         self.output = generate_function_from_table(table, self.methodSelector.currentIndex())
         self.close()
 
-    def interrupt_input(self, error_text):
+    def interrupt_input(self, error_text: str):
+        """! Сбрасывает вывод и создает диалоговое окно об ошибке.
+        @param error_text: текст ошибки
+        """
         self.output = None
         dialog = WarnDialog("Ошибка", error_text)
         dialog.exec_()
 
     def close_dialog(self):
+        """! Закрытие диалогового окна и сброс вывода.
+        """
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
         self.close()
 
 
 class LogicSelectDialog(QDialog):
+    """! Диалоговое окно для выбора логических элементов.
+    """
     output = None
-    output_data = {0: 'not', 1: 'and', 2: 'or', 3: 'xor', 4: 'input'}
+    output_data = ['not', 'and', 'or', 'xor', 'input']
 
     def __init__(self):
+        """! Инициализация окна.
+        """
         super().__init__()
         uic.loadUi('resources/LogicSelectDialog.ui', self)
         self.setWindowFlags(Qt.WindowContextHelpButtonHint ^ self.windowFlags())  # отключить подсказки
@@ -208,13 +262,19 @@ class LogicSelectDialog(QDialog):
         self.selector.currentIndexChanged.connect(self.change_image)
 
     def change_image(self):
+        """! Смена картинки, когда выбирается другой элемент.
+        """
         self.picture.setPixmap(QPixmap('resources/' +
                                        self.output_data[self.selector.currentIndex()] + '.png'))
 
     def confirm_input(self):
+        """! Подтверждение ввода. Output = название логического элемента на английском языке
+        """
         self.output = self.output_data[self.selector.currentIndex()]
         self.close()
 
     def close_dialog(self):
+        """! Закрытие диалогового окна и сброс вывода.
+        """
         self.output = None  # сбрасываем вывод, чтобы дать сигнал о том, что диалог был закрыт
         self.close()

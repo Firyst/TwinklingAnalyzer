@@ -1,29 +1,15 @@
-import json
+# -*- coding: utf-8 -*-
 
 import pytest
-from unittest.mock import Mock
 import pytestqt
 from Window import *
-import sys
 import os
-from time import sleep
 from LogicFunction import *
 
 os.chdir("..")
 
 
 class TestUtility:
-    def test_sgn_1(self):
-        for i in range(1, 999):
-            assert sgn(i) == 1
-
-    def test_sgn_2(self):
-        for i in range(-999, 0):
-            assert sgn(i) == -1
-
-    def test_sgn_0(self):
-        assert sgn(0) == 0
-
     def test_load_json(self):
         data = load_json("resources/elements/and.json")
         assert data['size'] == [5, 5]
@@ -125,9 +111,195 @@ class TestConversions:
         qtbot.mouseClick(win.conversion_clear, Qt.LeftButton)
         assert win.conversion_log.toPlainText() == ""
 
+    def test_window_missing_func(self, qtbot):
+        win = ProgramWindow()
+        qtbot.add_widget(win)
+
+        qtbot.mouseClick(win.conversion_save, Qt.LeftButton)
+
+        assert win.conversion_log.toPlainText() == ''
+
+
+class TestCanvas:
+    # MySchemeCanvas tests
+    def test_init(self, qtbot):
+        canvas = MySchemeCanvas(QLabel())
+
+        assert len(canvas.widgets) == len(canvas.lines) == len(canvas.connectors) == 0
+
+    def test_new(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.new_widget(DraggableWidget(parent, "output", canvas))
+
+        assert len(canvas.widgets) == 1 and len(canvas.connectors) == 1
+
+    def test_new_2(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.new_widget(DraggableWidget(parent, "and", canvas))
+
+        assert len(canvas.widgets) == 1 and len(canvas.connectors) == 3 and (len(canvas.lines)) == 0
+
+    def test_new_3(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.new_widget(DraggableWidget(parent, "and", canvas))
+        canvas.new_line(Connection(canvas, (10, 10), (20, 10)))
+        Connection2(canvas, (10, 10), (12, 12))
+
+        assert len(canvas.widgets) == 1 and len(canvas.connectors) == 9 and (len(canvas.lines)) == 3
+
+    def test_connectors(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.new_widget(DraggableWidget(parent, "output", canvas))
+
+        cons = canvas.compile_connectors()
+
+        assert sorted(list(cons.keys())) == [(0, 1)]
+
+    def test_connectors_2(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.new_widget(DraggableWidget(parent, "and", canvas))
+        Connection2(canvas, (0, 1), (0, 3))  # weird but ok
+
+        cons = canvas.compile_connectors()
+
+        assert sorted(list(cons.keys())) == [(0, 1), (0, 3), (4, 2)]
+
+    def test_connectors_3(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.new_widget(DraggableWidget(parent, "and", canvas))
+        Connection2(canvas, (0, 1), (0, 4))  # weird but ok
+
+        cons = canvas.compile_connectors()
+
+        assert sorted(list(cons.keys())) == [(0, 1), (0, 3), (0, 4), (4, 2)]
+
+    def test_render(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+
+        canvas.move_field(-100, -100)
+
+        assert widget.geometry().x() == 100 and widget.geometry().y() == 100
+
+    def test_render_2(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+        widget.grid_pos = (2, 3)
+
+        canvas.move_field(-100, -100)
+
+        assert widget.geometry().x() == 140 and widget.geometry().y() == 160
+
+    def test_render_3(self, qtbot):
+        parent = QLabel()
+        parent.setGeometry(0, 0, 240, 240)
+        canvas = MySchemeCanvas(parent)
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+        widget.grid_pos = (3, 3)
+
+        canvas.set_zoom(2)
+
+        assert widget.geometry() == QtCore.QRect(0, 0, 120, 120)
+
+    def test_render_4(self, qtbot):
+        parent = QLabel()
+        parent.setGeometry(0, 0, 240, 240)
+        canvas = MySchemeCanvas(parent)
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+        widget.grid_pos = (4, 4)
+
+        canvas.set_zoom(2)
+
+        assert widget.geometry() == QtCore.QRect(40, 40, 120, 120)
+
+    def test_compilation(self, qtbot):
+        parent = QLabel()
+        parent.setGeometry(0, 0, 240, 240)
+        canvas = MySchemeCanvas(parent)
+
+        # add some widgets
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+        widget.grid_pos = (12, 4)
+
+        widget = canvas.new_widget(DraggableWidget(parent, "and", canvas))
+        widget.grid_pos = (6, 3)
+
+        Connection2(canvas, (10, 5), (12, 5))
+
+        widget = canvas.new_widget(DraggableWidget(parent, "input", canvas, "A"))
+        widget.grid_pos = (0, 3)
+
+        Connection2(canvas, (2, 4), (6, 4))
+
+        widget = canvas.new_widget(DraggableWidget(parent, "input", canvas, "B"))
+        widget.grid_pos = (0, 5)
+
+        Connection2(canvas, (2, 6), (6, 6))
+
+        canvas.render_widgets()
+
+        assert canvas.compile_scheme().exp == "(A and B)"
+
+    def test_compilation_2(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+
+        with pytest.raises(SchemeCompilationError):
+            canvas.compile_scheme()
+
+    def test_compilation_3(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        widget = canvas.new_widget(DraggableWidget(parent, "output", canvas))
+        Connection2(canvas, (-2, -2), (0, 1))
+        Connection2(canvas, (-2, 4), (0, 1))
+
+        with pytest.raises(SchemeCompilationError):
+            canvas.compile_scheme()
+
+    def test_scheme_load_1(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        with pytest.raises(KeyError):
+            canvas.load_scheme(load_json("tests/test_scheme_invalid_1.json"))
+
+    def test_scheme_load_2(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        with pytest.raises(TypeError):
+            canvas.load_scheme(load_json("tests/test_scheme_invalid_2.json"))
+
+    def test_scheme_load_3(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        with pytest.raises(json.JSONDecodeError):
+            canvas.load_scheme(load_json("tests/test_scheme_invalid_3.json"))
+
+    def test_scheme_load_good(self, qtbot):
+        parent = QLabel()
+        canvas = MySchemeCanvas(parent)
+        canvas.load_scheme(load_json("tests/test_scheme_1.json"))
+
+        assert len(canvas.widgets) == 4
+
+    def test_scheme_save_1(self, qtbot):
+        win = ProgramWindow()
+        win.canvas.load_scheme(load_json("tests/test_scheme_1.json"))
+
+        assert win.canvas.save_scheme() == load_json("tests/test_scheme_1.json")
+
 
 class TestSchemeEditor:
-    # тесты редактора схем (MySchemeCanvas+ProgramWindow)
+    # тесты редактора схем в окружении программы (MySchemeCanvas+ProgramWindow)
     def test_scheme_open(self, qtbot):
         win = ProgramWindow()
         qtbot.add_widget(win)
@@ -160,33 +332,6 @@ class TestSchemeEditor:
         win.canvas.clear_all()
 
         assert len(win.canvas.widgets) == 0
-
-    def test_scheme_load_1(self, qtbot):
-        win = ProgramWindow()
-        with pytest.raises(KeyError):
-            win.canvas.load_scheme(load_json("tests/test_scheme_invalid_1.json"))
-
-    def test_scheme_load_2(self, qtbot):
-        win = ProgramWindow()
-        with pytest.raises(TypeError):
-            win.canvas.load_scheme(load_json("tests/test_scheme_invalid_2.json"))
-
-    def test_scheme_load_3(self, qtbot):
-        win = ProgramWindow()
-        with pytest.raises(json.JSONDecodeError):
-            win.canvas.load_scheme(load_json("tests/test_scheme_invalid_3.json"))
-
-    def test_scheme_load_good(self, qtbot):
-        win = ProgramWindow()
-        win.canvas.load_scheme(load_json("tests/test_scheme_1.json"))
-
-        assert len(win.canvas.widgets) == 4
-
-    def test_scheme_save_1(self, qtbot):
-        win = ProgramWindow()
-        win.canvas.load_scheme(load_json("tests/test_scheme_1.json"))
-
-        assert win.canvas.save_scheme() == load_json("tests/test_scheme_1.json")
 
     def test_scheme_compile_1(self, qtbot):
         win = ProgramWindow()
@@ -321,6 +466,31 @@ class TestConnector:
 
         assert sorted(list(map(lambda x: x.get_grid_pos(), parent.connectors))) == [(3, 4), (3, 6), (7, 5)]
 
+    def test_render(self, qtbot):
+        # connector should change size depending on zoom
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+        win.canvas.set_zoom(2)
+
+        parent = win.canvas.new_widget(DraggableWidget(win.schemeTab, "not", win.canvas))
+        parent.render_object()
+
+        assert parent.connectors[0].geometry().width() == parent.connectors[0].geometry().height() == \
+               parent.connectors[1].geometry().width() == parent.connectors[1].geometry().height() == 40
+
+    def test_repr(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+        win.canvas.set_zoom(2)
+
+        parent = win.canvas.new_widget(DraggableWidget(win.schemeTab, "not", win.canvas))
+        parent.grid_pos = (1, 1)
+        parent.render_object()
+
+        assert "Connector((1, 2), in1)" == str(parent.connectors[0])
+
 
 class TestConnection:
     def test_init(self, qtbot):
@@ -351,7 +521,7 @@ class TestConnection:
 
         assert sorted(list(map(lambda x: x.get_grid_pos(), win.canvas.connectors))) == [(0, 0), (2, 0)]
 
-    def test_init_render(self, qtbot):
+    def test_render_2(self, qtbot):
         win = ProgramWindow()
         win.open_scheme_editor()
         win.canvas.clear_all()
@@ -370,3 +540,78 @@ class TestConnection:
         line.delete()
 
         assert len(win.canvas.connectors) == 0
+
+    def test_repr(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        widget = win.canvas.new_line(Connection(win.canvas, (2, 2), (2, 8), 1))
+
+        assert "Line((2, 2), (2, 8))" == str(widget)
+
+
+class TestConnection2:
+    def test_init_1(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        Connection2(win.canvas, (1, 1), (4, 4))
+        assert len(win.canvas.lines) == 2 and len(win.canvas.connectors) == 4
+
+    def test_init_2(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        Connection2(win.canvas, (1, 1), (1, 4))
+        assert len(win.canvas.lines) == 1 and len(win.canvas.connectors) == 2
+
+    def test_init_3(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        Connection2(win.canvas, (1, 1), (4, 1))
+        assert len(win.canvas.lines) == 1 and len(win.canvas.connectors) == 2
+
+    def test_render_1(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        Connection2(win.canvas, (1, 1), (4, 4))
+        cons = win.canvas.compile_connectors()
+        # проверка, что линия соеденилась
+        assert len(max(cons.values(), key=len)) == 2
+
+    def test_render_2(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        Connection2(win.canvas, (1, 1), (1, 4))
+        cons = win.canvas.compile_connectors()
+        # проверка, что линия одна
+        assert len(max(cons.values(), key=len)) == 1
+
+    def test_render_3(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        Connection2(win.canvas, (1, 1), (1, 4))
+        Connection2(win.canvas, (1, 1), (4, 1))
+        Connection2(win.canvas, (4, 1), (4, 4))
+        Connection2(win.canvas, (1, 4), (4, 4))
+        cons = win.canvas.compile_connectors()
+        # проверка квадрата
+        assert sum(map(len, cons.values())) == 8
+
+    def test_delete(self, qtbot):
+        win = ProgramWindow()
+        win.open_scheme_editor()
+        win.canvas.clear_all()
+
+        line = Connection2(win.canvas, (1, 1), (4, 4))
+        line.delete()
+        assert len(win.canvas.lines) == 0 and len(win.canvas.connectors) == 0

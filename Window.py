@@ -1,29 +1,16 @@
-import sys
+# -*- coding: utf-8 -*-
+
 import os
 from typing import List, Tuple
-from PyQt5 import uic, QtCore, QtGui
-from PyQt5.QtCore import Qt, QSize, QPoint
-from PyQt5.QtGui import QPixmap, QCursor, QIcon
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QLabel, QDialog, QPushButton, QMenu, QFileDialog
+from PyQt5.QtGui import QCursor, QIcon
+from PyQt5.QtWidgets import QMenu, QFileDialog
 from Dialogs import *
 from LogicFunction import *
 from ImageGenerator import graph
 import json
-import copy
 
 
-DEBUG_MODE = 1
-
-
-def sgn(value):
-    """! Функция знака
-    @param value: входное значение
-    @return: value > 0: 1, value < 0: -1, else 0
-    """
-    if value == 0:
-        return 0
-    else:
-        return int(value // abs(value))
+DEBUG_MODE = 0
 
 
 def load_json(filename) -> dict:
@@ -62,25 +49,36 @@ class ProgramWindow(QMainWindow):
         self.function = None
 
         # привязка кнопок
+        # создание
         self.buttonTypeManual.clicked.connect(self.create_function_manual)
         self.buttonGenerateFromScheme.clicked.connect(self.open_scheme_editor)
         self.buttonGenerateFromTable.clicked.connect(self.create_function_from_table)
 
+        # схема
         self.action_scheme_compile.triggered.connect(self.prepare_compilation)  # компиляция схемы
         self.action_scheme_clear.triggered.connect(self.clear_canvas)  # очистка схемы
         self.action_scheme_open.triggered.connect(self.load_scheme)  # загрузка схемы
         self.action_scheme_save.triggered.connect(self.save_scheme)  # сохранение схемы
         self.action_scheme_quit.triggered.connect(self.close_scheme_editor)  # закрытие схемы
 
+        # преобразования
         self.button_convert.clicked.connect(self.run_conversion)  # запуск преобразования
         self.conversion_save.clicked.connect(self.save_conversion)  # сохранение преобразования
         self.conversion_clear.clicked.connect(self.clear_conversion_log)  # очистка преобразования
 
-        self.button_analyze_generate.clicked.connect(self.draw_graph)
-        self.button_analyze_save.clicked.connect(self.save_graph)
+        # анализ
+        self.button_analyze_generate.clicked.connect(self.draw_graph)  # предпросмотр
+        self.button_analyze_save.clicked.connect(self.save_graph)  # сохранение
 
-
+        ###
         self.action_about.triggered.connect(self.view_about_page)  # о программе
+
+        # Горячие клавиши
+        self.action_scheme_open.setShortcut("Ctrl+O")
+        self.action_scheme_save.setShortcut("Ctrl+S")
+        self.action_scheme_compile.setShortcut("Ctrl+G")
+        self.action_scheme_clear.setShortcut("Ctrl+1")
+        self.action_scheme_quit.setShortcut("Ctrl+Q")
 
         self.setup_editor()
 
@@ -96,11 +94,13 @@ class ProgramWindow(QMainWindow):
             return
 
         # создать диалоговое окно
+        # Использованные материалы: https://www.tutorialspoint.com/pyqt/pyqt_qfiledialog_widget.htm
         dialog = QFileDialog(self)
         dialog.setNameFilter("PNG (*.png)")
         dialog.setAcceptMode(QFileDialog.AcceptSave)
         if dialog.exec_():
             filename = dialog.selectedFiles()[0]
+            # конец заимствования
             # добавляем расширение, если оно не было указано
             if '.png' not in filename:
                 filename += '.png'
@@ -133,7 +133,7 @@ class ProgramWindow(QMainWindow):
     # ПРЕОБРАЗОВАНИЯ
 
     def run_conversion(self):
-        """! Запустить преобразование, заданное
+        """! Запустить преобразование, выбранное в списке
         """
         conv_type = self.conversion_selector.currentIndex()
 
@@ -158,13 +158,18 @@ class ProgramWindow(QMainWindow):
             self.conversion_log.setPlainText("F = " + exp)
         elif conv_type <= 6:
             # СДНФ/СКНФ
-            new_func = generate_function_from_table(self.function.generate_boolean_table(), conv_type % 2)
+            new_func = generate_function_from_table(self.function.generate_boolean_table(), 1 - conv_type % 2,
+                                                    var_names=self.function.get_variables())
             self.conversion_log.setPlainText("F = " + new_func.exp.replace('  ', ' '))
         elif conv_type == 7:
             # МКНФ
             try:
                 new_func = self.function.simplify_sknf()
                 self.conversion_log.setPlainText("F = " + new_func.exp.replace('  ', ' '))
+            except InputException as error:
+                # функция равна константе
+                dialog = WarnDialog("Ошибка", error.args[0])
+                dialog.exec_()
             except Exception:
                 dialog = WarnDialog("Ошибка", "Данный метод не способен упростить эту функцию, попробуйте другой.")
                 dialog.exec_()
@@ -173,6 +178,10 @@ class ProgramWindow(QMainWindow):
             try:
                 new_func = self.function.simplify_sdnf()
                 self.conversion_log.setPlainText("F = " + new_func.exp.replace('  ', ' '))
+            except InputException as error:
+                # функция равна константе
+                dialog = WarnDialog("Ошибка", error.args[0])
+                dialog.exec_()
             except Exception:
                 dialog = WarnDialog("Ошибка", "Данный метод не способен упростить эту функцию, попробуйте другой.")
                 dialog.exec_()
@@ -199,6 +208,13 @@ class ProgramWindow(QMainWindow):
                                            "Баулин Филипп\nСеребрякова Ольга\nМИЭМ НИУ ВШЭ, 2022\n\n"
                                            "https://github.com/Firyst/TwinklingAnalyzer")
         dialog.exec_()
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        """! Событие закрытия окна программы. Используется для очистки кэша.
+        @param a0: событие от pyqt
+        """
+        if os.path.exists("resources/temp_graph.png"):
+            os.remove("resources/temp_graph.png")
 
     # ФУНКЦИИ ДЛЯ СХЕМЫ
 
@@ -297,10 +313,12 @@ class ProgramWindow(QMainWindow):
         """! Сохранить схему в файл
         """
         # создать диалоговое окно
+        # Использованные материалы: https://www.tutorialspoint.com/pyqt/pyqt_qfiledialog_widget.htm
         dialog = QFileDialog(self)
         dialog.setAcceptMode(QFileDialog.AcceptSave)
         if dialog.exec_():
             filename = dialog.selectedFiles()[0]
+            # конец заимствования
             # добавляем расширение, если оно не было указано
             if '.json' not in filename:
                 filename += '.json'
@@ -311,12 +329,14 @@ class ProgramWindow(QMainWindow):
         """! Загрузить схему из файла
         """
         # создать диалоговое окно
+        # Использованные материалы: https://www.tutorialspoint.com/pyqt/pyqt_qfiledialog_widget.htm
         dialog = QFileDialog(self)
         dialog.setAcceptMode(QFileDialog.AcceptOpen)
         dialog.setNameFilter("JSON (*.json)")
         if dialog.exec_():
-            with open(dialog.selectedFiles()[0], 'r') as file:
-                data = json.load(file)
+            try:
+                data = load_json(dialog.selectedFiles()[0])
+                # конец заимствования
                 # проверка валидности JSON
                 if data['filetype'] == "TA-scheme-v1":
                     # загружаем схему
@@ -325,6 +345,8 @@ class ProgramWindow(QMainWindow):
                     self.schemeTab.show()
                     self.canvas.render_widgets()
                 else:
+                    raise TypeError
+            except Exception:
                     dialog = WarnDialog("Ошибка", "Не удаётся прочитать файл.\n"
                                                   "Возможно он был поврежден или не является файлом схемы.")
                     dialog.exec_()
@@ -419,6 +441,7 @@ class DraggableWidget(QLabel):
                 widget = self.canvas.new_widget(DraggableWidget(self.canvas.parent, self.obj_type, self.canvas))
             except InputException:
                 # если дублировали input и не стали задавать имя
+                self.canvas.parent.show()
                 return
             widget.grid_pos = (self.grid_pos[0] + 1, self.grid_pos[1] + 1)  # задать смещенную позицию
             self.canvas.parent.show()
@@ -541,8 +564,7 @@ class Connector(QLabel):
         """
         step = self.parent.canvas.step  # grid step
 
-        self.setGeometry(self.offset[0] * step, self.offset[1] * step,
-                         step, step)
+        self.setGeometry(self.offset[0] * step, self.offset[1] * step, step, step)
 
     def get_grid_pos(self) -> Tuple[int, int]:
         """! Получить координаты объекта на сетке.
@@ -1059,7 +1081,7 @@ class MySchemeCanvas:
                 output_node = widget
                 break
         debug_print("Найден выходной коннектор")
-
+        result = '-'
         try:
             # пробуем скомпилировать
             # функция также может вызывать исключения SchemeCompilationError,
@@ -1087,7 +1109,7 @@ class MySchemeCanvas:
         self.render_widgets()
 
     def move_field(self, mx: int, my: int):
-        """ ! Подвинуть "камеру" на поле
+        """ ! Подвинуть "камеру" (левый верхний угол) на поле
         @param mx: смещение по X
         @param my: смещение по Y
         """

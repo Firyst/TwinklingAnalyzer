@@ -1,6 +1,7 @@
+# -*- coding: utf-8 -*-
+
 from itertools import product
-from string import punctuation, ascii_letters, digits
-from string import ascii_lowercase as var_names
+from string import punctuation, ascii_letters, digits, ascii_lowercase
 
 # словарь замен для представления функции в стандартном python виде
 REPLACES = {' and ': ['&&', '*', ' и ', ' AND ', ' И ', '&', '⋀'],
@@ -51,8 +52,8 @@ class LogicFunction:
             raise InputException("В функции должно быть хотя бы две переменных.")
 
         for variable in self.get_variables():
-            if variable in digits:
-                raise InputException("Переменные нельзя называть цифрами")
+            if variable[0] in digits:
+                raise InputException("Переменные не могут начинаться с цифр.")
             if len(variable) > 4:
                 raise InputException("Названия переменных должны быть короче 5 символов.")
 
@@ -335,14 +336,14 @@ class LogicFunction:
         return LogicFunction('*'.join(sknf))
 
 
-def generate_function_from_table(table: list, method=0) -> LogicFunction:
+def generate_function_from_table(table: list, method=0, var_names=ascii_lowercase) -> LogicFunction:
     """! Генерирует и возвращает объект LogicFunction по таблице истинности формата:
     list: [((tuple: input_values), result)]
     Используемые названия переменных: a, b, c, d...
     @param table list: [((tuple: input_values), result)]
     @param method 0 - СДНФ, 1 - СКНФ
+    @param var_names: итерируемый объект с названиями переменных. По умолчанию маленьий латинский алфавит.
     @return: объект LogicFunction с совершенной формой
-
     """
     snf = []  # список с логическими выражениями
     for line in table:

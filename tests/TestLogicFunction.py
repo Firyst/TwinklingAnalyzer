@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import pytest
 from LogicFunction import *
 
@@ -94,33 +96,57 @@ def test_generate_boolean_table_2():
                                           ((1, 0, 0), 1), ((1, 0, 1), 1), ((1, 1, 0), 1), ((1, 1, 1), 1)]
 
 
-def test_simplyfy_sdnf_1():
+def test_simplify_sdnf_1():
     f = LogicFunction('A*B*C')
     assert f.generate_boolean_table() == f.simplify_sdnf().generate_boolean_table()
 
 
-def test_simplyfy_sdnf_2():
+def test_simplify_sdnf_2():
     f = LogicFunction('!A*A*!B*B')
     with pytest.raises(InputException):
         f.simplify_sdnf()
 
 
-def test_simplyfy_sdnf_3():
+def test_simplify_sdnf_3():
     f = LogicFunction('!A^B+!C^D*F')
     assert f.generate_boolean_table() == f.simplify_sdnf().generate_boolean_table()
 
 
-def test_simplyfy_sknf_1():
+def test_simplify_sknf_1():
     f = LogicFunction('A+B+C')
     assert f.generate_boolean_table() == f.simplify_sknf().generate_boolean_table()
 
 
-def test_simplyfy_sknf_2():
+def test_simplify_sknf_2():
     f = LogicFunction('!A+A+!B+B')
     with pytest.raises(InputException):
         f.simplify_sknf()
 
 
-def test_simplyfy_sknf_3():
+def test_simplify_sknf_3():
     f = LogicFunction('!A^B+!C^D*F')
     assert f.generate_boolean_table() == f.simplify_sknf().generate_boolean_table()
+
+
+def test_func_from_table_1():
+    f = LogicFunction('A+B*C')
+    table = f.generate_boolean_table()
+    assert table == generate_function_from_table(table, 0).generate_boolean_table()
+
+
+def test_func_from_table_2():
+    f = LogicFunction('A+B*C')
+    table = f.generate_boolean_table()
+    assert table == generate_function_from_table(table, 1).generate_boolean_table()
+
+
+def test_func_from_table_3():
+    f = LogicFunction('!A^B+!C^D*F')
+    table = f.generate_boolean_table()
+    assert table == generate_function_from_table(table, 0).generate_boolean_table()
+
+
+def test_func_from_table_4():
+    f = LogicFunction('!A^B+!C^D*F')
+    table = f.generate_boolean_table()
+    assert table == generate_function_from_table(table, 1).generate_boolean_table()
