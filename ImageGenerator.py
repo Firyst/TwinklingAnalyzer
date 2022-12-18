@@ -34,7 +34,7 @@ def graph(func: LogicFunction, text_color, bg_color, graph_color, output):
             draw.line((40 + 90 * (j + 1), 40, 40 + 90 * (j + 1) + 90, 40), fill=graph_color, width=4)
         for j in range(1, len(gbt)):
             if gbt[j - 1][1] != gbt[j][1]:
-                draw.line((40 + 90 * (j + 1), 40, 40 + 90 * (j + 1), 100), fill=graph_color, width=4)
+                draw.line((40 + 90 * (j + 1), 39, 40 + 90 * (j + 1), 102), fill=graph_color, width=4)
 
     # Рисуем названия переменных
     for i in range(len(f_vars)):
@@ -59,7 +59,7 @@ def graph(func: LogicFunction, text_color, bg_color, graph_color, output):
             # Вертикальные линии
             line = i * 100 + 20
             if gbt[j - 1][0][i] != gbt[j][0][i]:
-                draw.line((40 + 90 * (j + 1), line + 140, 40 + 90 * (j + 1), line + 180), fill=graph_color, width=4)
+                draw.line((40 + 90 * (j + 1), line + 139, 40 + 90 * (j + 1), line + 182), fill=graph_color, width=4)
 
     # Сохраняем результат
     img.save(output, 'png')
