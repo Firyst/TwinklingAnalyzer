@@ -1160,7 +1160,7 @@ class MySchemeCanvas:
         """! Нажатие скм
         @param ev: событие от pyqt
         """
-        if ev.button() == Qt.MidButton:
+        if ev.button() == Qt.MidButton or ev.button() == Qt.LeftButton:
             self.dragging = 1
             self.cdx, self.cdy = QCursor.pos().x(), QCursor.pos().y()
             QApplication.setOverrideCursor(Qt.SizeAllCursor)
