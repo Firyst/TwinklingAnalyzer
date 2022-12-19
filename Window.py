@@ -41,7 +41,7 @@ class ProgramWindow(QMainWindow):
         self.canvas = MySchemeCanvas(self.schemeTab)
         self.schemeTab.hide()
 
-        self.setWindowIcon(QIcon("resources/not.png"))
+        self.setWindowIcon(QIcon("resources/logo_new.png"))
 
         # отключаем меню схемы (оно не нужно по умолчанию)
         self.menuScheme.setEnabled(0)
